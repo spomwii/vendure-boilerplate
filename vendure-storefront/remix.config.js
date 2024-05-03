@@ -75,10 +75,16 @@ function selectConfig() {
   if (!['development', 'production'].includes(process.env.NODE_ENV))
     throw new Error(`Unknown NODE_ENV: ${process.env.NODE_ENV}`);
   if (process.env.CF_PAGES) return cloudflarePagesConfig;
-  if (process.env.RAILWAY) return railwayConfig;
+  if (process.env.RAILWAY) {
+    console.log('Using Railway config', railwayConfig);
+    return railwayConfig;
+  }
   if (process.env.NETLIFY) return netlifyConfig;
   if (process.env.NODE_ENV === 'development') return devConfig;
-  if (!process.env.CF_PAGES && !process.env.NETLIFY) return buildConfig;
+  if (!process.env.CF_PAGES && !process.env.NETLIFY) {
+    console.log('Using Build config', buildConfig);
+    return buildConfig;
+  }
   throw new Error(`Cannot select config`);
 }
 
