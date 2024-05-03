@@ -24,6 +24,7 @@ const railwayConfig = {
   serverBuildPath: "./build/index.js",
   serverBuildDirectory: "build",
   ignoredRouteFiles: [".*"],
+  sourcemap: false,
   ...commonConfig,
 };
 
