@@ -7,3 +7,5 @@ COPY package-lock.json ./
 RUN npm install --production
 COPY . .
 RUN npm run build
+
+CMD ["npm", "start"]
