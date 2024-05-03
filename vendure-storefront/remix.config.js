@@ -20,6 +20,16 @@ const commonConfig = {
 /**
  * @type {import('@remix-run/dev').AppConfig}
  */
+const railwayConfig = {
+  serverBuildPath: "./build/index.js",
+  serverBuildDirectory: "build",
+  ignoredRouteFiles: [".*"],
+  ...commonConfig,
+};
+
+/**
+ * @type {import('@remix-run/dev').AppConfig}
+ */
 const cloudflarePagesConfig = {
   serverBuildPath: 'functions/[[path]].js',
   serverPlatform: 'neutral',
@@ -64,6 +74,7 @@ function selectConfig() {
   if (!['development', 'production'].includes(process.env.NODE_ENV))
     throw new Error(`Unknown NODE_ENV: ${process.env.NODE_ENV}`);
   if (process.env.CF_PAGES) return cloudflarePagesConfig;
+  if (process.env.RAILWAY) return railwayConfig;
   if (process.env.NETLIFY) return netlifyConfig;
   if (process.env.NODE_ENV === 'development') return devConfig;
   if (!process.env.CF_PAGES && !process.env.NETLIFY) return buildConfig;
