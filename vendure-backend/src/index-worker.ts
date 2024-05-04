@@ -1,8 +1,11 @@
 import { bootstrapWorker } from '@vendure/core';
-import { config } from './vendure-config';
+import { getConfig } from './vendure-config';
 
-bootstrapWorker(config)
+(async () => {
+    const vendureConfig = await getConfig();
+    bootstrapWorker(vendureConfig)
     .then(worker => worker.startJobQueue())
     .catch(err => {
         console.log(err);
     });
+})();
