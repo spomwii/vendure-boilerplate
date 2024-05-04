@@ -15,7 +15,7 @@ const IS_DEV = process.env.APP_ENV === 'dev';
 export const config: VendureConfig = {
     apiOptions: {
         // hostname: process.env.PUBLIC_DOMAIN,
-        port: +(process.env.PORT || 3001),
+        port: +(process.env.PORT || 3000),
         adminApiPath: 'admin-api',
         shopApiPath: 'shop-api',
         // The following options are useful in development mode,
@@ -93,7 +93,7 @@ export const config: VendureConfig = {
             port: 3002,
             adminUiConfig: {
                 apiHost: IS_DEV ? `http://${process.env.PUBLIC_DOMAIN}` : `https://${process.env.PUBLIC_DOMAIN}`, 
-                apiPort: 3000,
+                apiPort: +(process.env.PORT || 3000),
             },
         }),
     ],
