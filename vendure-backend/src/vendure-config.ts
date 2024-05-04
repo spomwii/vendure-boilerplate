@@ -93,7 +93,7 @@ export const config: VendureConfig = {
             port: 3002,
             adminUiConfig: {
                 apiHost: IS_DEV ? `http://${process.env.PUBLIC_DOMAIN}` : `https://${process.env.PUBLIC_DOMAIN}`, 
-                apiPort: +(process.env.PORT || 3000),
+                // apiPort: +(process.env.PORT || 3000),
             },
         }),
     ],
