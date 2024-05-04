@@ -7,7 +7,7 @@ import {
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
-import { createConnection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import 'dotenv/config';
 import path from 'path';
 
@@ -17,7 +17,7 @@ const IS_DEV = process.env.APP_ENV === 'dev';
 const dbSeeded = async (): Promise<boolean> => {
     console.log('Checking if database has been seeded...');
     try {
-      const connection = await createConnection({
+      const dataSource = new DataSource({
         type: 'postgres',
         database: process.env.DB_NAME,
         schema: process.env.DB_SCHEMA,
@@ -25,26 +25,30 @@ const dbSeeded = async (): Promise<boolean> => {
         port: +process.env.DB_PORT,
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
+        entities: [], // Add your entity paths here if needed
       });
   
-      const result = await connection.query(`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = '${process.env.DB_SCHEMA}'
-          AND table_name = 'migration'
-        );
-      `);
-
-      console.log('result', result, 'returning', result[0].exists);
+      await dataSource.initialize();
   
-      await connection.close();
+      const queryRunner = dataSource.createQueryRunner();
   
-      return result[0].exists;
+      // Check if a specific table exists that is created during seeding
+      const tableExists = await queryRunner.hasTable('migrations');
+  
+      // Alternatively, you can check for the presence of a specific record
+      // const recordExists = await queryRunner.manager.findOne(YourEntity, { /* condition */ });
+  
+      await queryRunner.release();
+      await dataSource.destroy();
+  
+      console.log('Database seeded:', tableExists);
+  
+      return tableExists;
     } catch (error) {
       console.error('Error checking if database has been seeded:', error);
       return false;
     }
-  };
+};
   
 interface DbConnectionOptions {
     type: "oracle" | "postgres";
