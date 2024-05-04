@@ -12,7 +12,7 @@ import path from 'path';
 
 const IS_DEV = process.env.APP_ENV === 'dev';
 
-console.log(process.env.DB_SEEDED);
+console.log('process.env.DB_SEEDED', process.env.DB_SEEDED);
 
 export const config: VendureConfig = {
     apiOptions: {
