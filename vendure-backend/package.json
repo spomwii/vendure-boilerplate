@@ -6,7 +6,7 @@
     "dev:server": "ts-node ./src/index.ts",
     "dev:worker": "ts-node ./src/index-worker.ts",
     "dev": "concurrently npm:dev:*",
-    "prebuild": "export $(node check-db-seeded.js)",
+    "prebuild": "node check-db-seeded.js",
     "build": "tsc",
     "start:server": "node ./dist/index.js",
     "start:worker": "node ./dist/index-worker.js",
