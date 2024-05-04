@@ -35,7 +35,7 @@ const dbSeeded = async (): Promise<boolean> => {
         );
       `);
 
-      console.log('result', result);
+      console.log('result', result, 'returning', result[0].exists);
   
       await connection.close();
   
@@ -60,9 +60,11 @@ interface DbConnectionOptions {
 }
 
 const getDbConnectionOptions = async (): Promise<DbConnectionOptions> => {
+    const dbAlreadySeeded = await dbSeeded();
+    console.log(dbAlreadySeeded, 'dbAlreadySeeded');
     const config: DbConnectionOptions = {
         type: 'postgres',
-        synchronize: !(await dbSeeded()),
+        synchronize: !dbAlreadySeeded,
         migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
         logging: false,
         database: process.env.DB_NAME,
