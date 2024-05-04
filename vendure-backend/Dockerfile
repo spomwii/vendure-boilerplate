@@ -7,6 +7,7 @@ COPY package-lock.json ./
 RUN npm install --production
 RUN npm install -g concurrently
 COPY . .
+RUN npm run prebuild
 RUN npm run build
 
 CMD ["npm", "start"]

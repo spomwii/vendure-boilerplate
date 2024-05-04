@@ -12,6 +12,8 @@ import path from 'path';
 
 const IS_DEV = process.env.APP_ENV === 'dev';
 
+console.log(process.env.DB_SEEDED);
+
 export const config: VendureConfig = {
     apiOptions: {
         // hostname: process.env.PUBLIC_DOMAIN,
@@ -46,7 +48,7 @@ export const config: VendureConfig = {
         type: 'postgres',
         // See the README.md "Migrations" section for an explanation of
         // the `synchronize` and `migrations` options.
-        synchronize: true,
+        synchronize: process.env.DB_SEEDED === 'false',
         migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
         logging: false,
         database: process.env.DB_NAME,
