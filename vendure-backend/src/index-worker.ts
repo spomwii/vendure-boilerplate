@@ -3,13 +3,16 @@ import { bootstrap, bootstrapWorker, VendureConfig } from '@vendure/core';
 import { populate } from '@vendure/core/cli';
 import { config } from './vendure-config';
 import { dbSeeded, DbConnectionOptions } from './db-setup';
-import { INestApplicationContext } from '@nestjs/common/interfaces/nest-application-context.interface';
 
 const initialDataPath = path.join(require.resolve('@vendure/create'), '../assets/initial-data.json');
 
-async function bootstrapServer(config: VendureConfig): Promise<INestApplicationContext> {
+async function populateInitialData(config: VendureConfig): Promise<void> {
     const app = await bootstrap(config);
-    return app;
+    await populate(
+        () => Promise.resolve(app),
+        require(initialDataPath),
+    );
+    await app.close();
 }
 
 (async () => {
@@ -24,23 +27,20 @@ async function bootstrapServer(config: VendureConfig): Promise<INestApplicationC
     console.log('index-worker.ts', updatedConfig.dbConnectionOptions);
 
     if (!dbAlreadySeeded) {
-        const initialData = require(initialDataPath);
-        console.log('Populating database with initial data...', initialData);
+        console.log('Populating database with initial data...');
         try {
-            await populate(
-                () => bootstrapServer(updatedConfig),
-                initialData,
-            );
-            console.log('Database populated with initial data ####');
+            await populateInitialData(updatedConfig);
+            console.log('Database populated with initial data');
         } catch (error) {
             console.error('Error populating database:', error);
         }
     }
 
-    // try {
-    //     const worker = await bootstrapWorker(updatedConfig);
-    //     worker.startJobQueue();
-    // } catch (error) {
-    //     console.error('Error bootstrapping worker:', error);
-    // }
+    bootstrapWorker(updatedConfig)
+        .then(worker => {
+            worker.startJobQueue();
+        })
+        .catch(err => {
+            console.log(err);
+        });
 })();
