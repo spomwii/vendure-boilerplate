@@ -14,7 +14,11 @@ import { dbSeeded, DbConnectionOptions } from './db-setup';
     };
     console.log('index-worker.ts', updatedConfig.dbConnectionOptions);
     bootstrapWorker(updatedConfig)
-    .then(worker => worker.startJobQueue())
+    .then(worker => {
+        console.log('Worker started');
+        worker.startJobQueue();
+        console.log('after startJobQueue');
+    })
     .catch(err => {
         console.log(err);
     });
