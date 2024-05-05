@@ -19,14 +19,13 @@ const initialDataPath = path.join(require.resolve('@vendure/create'), '../assets
     populate(
         () => bootstrap(updatedConfig),
         require(initialDataPath)
-            .then((app: any) => app.close())
-            .then(
-                () => process.exit(0),
-                (err: any) => {
-                    console.log('Populating db failed...', err);
-                    process.exit(1);
-                },
-            )
+    ).then((app: any) => app.close())
+    .then(
+        () => process.exit(0),
+        (err: any) => {
+            console.log('Populating db failed...', err);
+            process.exit(1);
+        },
     );
 
     console.log('index-worker.ts', updatedConfig.dbConnectionOptions);
