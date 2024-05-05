@@ -6,15 +6,6 @@ import { dbSeeded, DbConnectionOptions } from './db-setup';
 
 const initialDataPath = path.join(require.resolve('@vendure/create'), '../assets/initial-data.json');
 
-async function populateInitialData(config: VendureConfig): Promise<void> {
-    const app = await bootstrap(config);
-    await populate(
-        () => Promise.resolve(app),
-        require(initialDataPath),
-    );
-    await app.close();
-}
-
 (async () => {
     const dbAlreadySeeded = await dbSeeded(config.dbConnectionOptions as DbConnectionOptions);
     const updatedConfig: VendureConfig = {
@@ -26,15 +17,19 @@ async function populateInitialData(config: VendureConfig): Promise<void> {
     };
     console.log('index-worker.ts', updatedConfig.dbConnectionOptions);
 
+    const app = await bootstrap(updatedConfig);
+
     if (!dbAlreadySeeded) {
         console.log('Populating database with initial data...');
         try {
-            await populateInitialData(updatedConfig);
+            await populate(() => Promise.resolve(app), require(initialDataPath));
             console.log('Database populated with initial data');
         } catch (error) {
             console.error('Error populating database:', error);
         }
     }
+
+    await app.close();
 
     bootstrapWorker(updatedConfig)
         .then(worker => {
