@@ -16,10 +16,14 @@ const initialDataPath = path.join(require.resolve('@vendure/create'), '../assets
         },
     };
 
-    populate(
+    console.log('before populate');
+    await populate(
         () => bootstrap(updatedConfig),
         require(initialDataPath)
-    ).then((app: any) => app.close())
+    ).then((app: any) => {
+        console.log('Populating db succeeded! closing app...');
+        app.close();
+    })
     .then(
         () => process.exit(0),
         (err: any) => {
@@ -27,6 +31,7 @@ const initialDataPath = path.join(require.resolve('@vendure/create'), '../assets
             process.exit(1);
         },
     );
+    console.log('after populate');
 
     console.log('index-worker.ts', updatedConfig.dbConnectionOptions);
     bootstrapWorker(updatedConfig)
