@@ -24,22 +24,23 @@ async function bootstrapServer(config: VendureConfig): Promise<INestApplicationC
     console.log('index-worker.ts', updatedConfig.dbConnectionOptions);
 
     if (!dbAlreadySeeded) {
-        console.log('Populating database with initial data...');
+        const initialData = require(initialDataPath);
+        console.log('Populating database with initial data...', initialData);
         try {
             await populate(
                 () => bootstrapServer(updatedConfig),
-                require(initialDataPath),
+                initialData,
             );
-            console.log('Database populated with initial data');
+            console.log('Database populated with initial data ####');
         } catch (error) {
             console.error('Error populating database:', error);
         }
     }
 
-    try {
-        const worker = await bootstrapWorker(updatedConfig);
-        worker.startJobQueue();
-    } catch (error) {
-        console.error('Error bootstrapping worker:', error);
-    }
+    // try {
+    //     const worker = await bootstrapWorker(updatedConfig);
+    //     worker.startJobQueue();
+    // } catch (error) {
+    //     console.error('Error bootstrapping worker:', error);
+    // }
 })();
