@@ -1,10 +1,10 @@
 import { bootstrap, runMigrations } from '@vendure/core';
-import { getConfig } from './vendure-config';
+import { config } from './vendure-config';
 
 (async () => {
-    const vendureConfig = await getConfig();
-    runMigrations(vendureConfig)
-    .then(() => bootstrap(vendureConfig))
+    console.log('index.ts');
+    runMigrations(config)
+    .then(() => bootstrap(config))
     .catch(err => {
         console.log(err);
     });

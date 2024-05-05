@@ -7,82 +7,12 @@ import {
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
-import { DataSource } from 'typeorm';
 import 'dotenv/config';
 import path from 'path';
 
 const IS_DEV = process.env.APP_ENV === 'dev';
 
-
-const dbSeeded = async (): Promise<boolean> => {
-    console.log('Checking if database has been seeded...');
-    try {
-      const dataSource = new DataSource({
-        type: 'postgres',
-        database: process.env.DB_NAME,
-        schema: process.env.DB_SCHEMA,
-        host: process.env.DB_HOST,
-        port: +process.env.DB_PORT,
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        entities: [], // Add your entity paths here if needed
-      });
-  
-      await dataSource.initialize();
-  
-      const queryRunner = dataSource.createQueryRunner();
-  
-      // Check if a specific table exists that is created during seeding
-      const tableExists = await queryRunner.hasTable('migrations');
-  
-      // Alternatively, you can check for the presence of a specific record
-      // const recordExists = await queryRunner.manager.findOne(YourEntity, { /* condition */ });
-  
-      await queryRunner.release();
-      await dataSource.destroy();
-  
-      console.log('Database seeded:', tableExists);
-  
-      return tableExists;
-    } catch (error) {
-      console.error('Error checking if database has been seeded:', error);
-      return false;
-    }
-};
-  
-interface DbConnectionOptions {
-    type: "oracle" | "postgres";
-    synchronize: boolean;
-    migrations: string[];
-    logging: boolean;
-    database: string | undefined;
-    schema: string | undefined;
-    host: string | undefined;
-    port: number | undefined;
-    username: string | undefined;
-    password: string | undefined;
-}
-
-const getDbConnectionOptions = async (): Promise<DbConnectionOptions> => {
-    const dbAlreadySeeded = await dbSeeded();
-    console.log(dbAlreadySeeded, 'dbAlreadySeeded');
-    const config: DbConnectionOptions = {
-        type: 'postgres',
-        synchronize: !dbAlreadySeeded,
-        migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
-        logging: false,
-        database: process.env.DB_NAME,
-        schema: process.env.DB_SCHEMA,
-        host: process.env.DB_HOST,
-        port: +process.env.DB_PORT,
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-    };
-    console.log('DB Connection config', config);
-    return config;
-};
-
-export const getConfig = async (): Promise<VendureConfig> => ({
+export const config: VendureConfig = {
     apiOptions: {
         // hostname: process.env.PUBLIC_DOMAIN,
         port: +(process.env.PORT || 3000),
@@ -112,7 +42,17 @@ export const getConfig = async (): Promise<VendureConfig> => ({
           secret: process.env.COOKIE_SECRET,
         },
     },
-    dbConnectionOptions: await getDbConnectionOptions(),
+    dbConnectionOptions: {
+        type: 'postgres',
+        migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
+        logging: false,
+        database: process.env.DB_NAME,
+        schema: process.env.DB_SCHEMA,
+        host: process.env.DB_HOST,
+        port: +process.env.DB_PORT,
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+    },
     paymentOptions: {
         paymentMethodHandlers: [dummyPaymentHandler],
     },
@@ -154,4 +94,4 @@ export const getConfig = async (): Promise<VendureConfig> => ({
             },
         }),
     ],
-});
+};
