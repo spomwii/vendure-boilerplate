@@ -7,6 +7,7 @@
     "dev:worker": "ts-node ./src/index-worker.ts",
     "dev": "concurrently npm:dev:*",
     "build": "tsc",
+    "seed:once": "ts-node ./src/seed-once.ts",
     "start:server": "node ./dist/index.js",
     "start:worker": "node ./dist/index-worker.js",
     "start": "concurrently npm:start:*"
@@ -19,6 +20,7 @@
     "@vendure/email-plugin": "2.2.3",
     "dotenv": "16.4.5",
     "pg": "8.11.5",
+    "sharp": "^0.33.3",
     "typescript": "5.3.3"
   },
   "devDependencies": {

@@ -9,4 +9,4 @@ RUN npm install -g concurrently
 COPY . .
 RUN npm run build
 
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npm run seed:once && npm start"]
