@@ -5,7 +5,6 @@ import { dbSeeded, DbConnectionOptions } from './db-setup';
 import { populate } from '@vendure/core/cli';
 
 (async () => {
-  console.log(config.dbConnectionOptions);
   const dbAlreadySeeded = await dbSeeded(config.dbConnectionOptions as DbConnectionOptions);
   if (dbAlreadySeeded) {
     console.log('Database already seeded, skipping...');
