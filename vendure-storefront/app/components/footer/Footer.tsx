@@ -127,7 +127,7 @@ export default function Footer({
         <div className="mt-8 border-t pt-8">
           <a
             className="flex items-center space-x-4 font-medium text-gray-500 hover:text-gray-700"
-            href="https://funkyton.com/vendure-tutorial/"
+            href="https://https://github.com/rpuls/vendure-boilerplate"
           >
             <svg
               fill="currentColor"
@@ -141,7 +141,7 @@ export default function Footer({
                 clipRule="evenodd"
               />
             </svg>
-            <span>github.com/vendure-ecommerce/storefront-remix-starter</span>
+            <span>github.com/rpuls/vendure-boilerplate</span>
           </a>
         </div>
       </div>
