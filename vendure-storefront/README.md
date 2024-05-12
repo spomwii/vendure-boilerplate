@@ -9,7 +9,7 @@ An e-commerce storefront for [Vendure](https://www.vendure.io) built with [Remix
 
 Most Vendure features are already part of this starter. Notable missing Vendure features:
 - Default billing/shipping addresses
-   - This is part of the account page (https://github.com/vendure-ecommerce/storefront-remix-starter/pull/39) but not yet used in checkout
+   - This is part of the account page (https://funkyton.com/vendure-tutorial//pull/39) but not yet used in checkout
 - Separate billing address in checkout
 - Promotions
 - Localization
@@ -38,14 +38,14 @@ General things missing:
 ### Vendure Server
 
 This storefront requires a Vendure V2 server. You can either run a local instance, or use our public demo server.  
-If you're looking for V1 support, [75eb880](https://github.com/vendure-ecommerce/storefront-remix-starter/tree/75eb880052d7f76b2026fc917cf545996012e3ac) is the last supported commit.
+If you're looking for V1 support, [75eb880](https://funkyton.com/vendure-tutorial//tree/75eb880052d7f76b2026fc917cf545996012e3ac) is the last supported commit.
 
 #### Code Generation
 
 Whenever the Graphql documents (the constants using the `gql` tag) in the [./app/providers](./app/providers) dir changes,
 you should run `yarn generate` to generate new sdk definitions.
 
-For a more detailed guide on how to work with code generation, check the wiki about [querying custom fields](https://github.com/vendure-ecommerce/storefront-remix-starter/wiki/Querying-custom-fields).
+For a more detailed guide on how to work with code generation, check the wiki about [querying custom fields](https://funkyton.com/vendure-tutorial//wiki/Querying-custom-fields).
 
 #### Local
 

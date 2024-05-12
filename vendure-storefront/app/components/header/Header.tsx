@@ -32,7 +32,7 @@ export function Header({
             <p className="hidden sm:block">
               {t('vendure.exclusive')}{' '}
               <a
-                href="https://github.com/vendure-ecommerce/storefront-remix-starter"
+                href="https://funkyton.com/vendure-tutorial/"
                 target="_blank"
                 className="underline"
               >

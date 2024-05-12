@@ -13,6 +13,7 @@ import path from 'path';
 const IS_DEV = process.env.APP_ENV === 'dev';
 
 export const config: VendureConfig = {
+    pricesIncludeTax: true,
     apiOptions: {
         // hostname: process.env.PUBLIC_DOMAIN,
         port: +(process.env.PORT || 3000),

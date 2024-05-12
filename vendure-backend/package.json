@@ -13,18 +13,18 @@
     "start": "concurrently npm:start:*"
   },
   "dependencies": {
-    "@vendure/admin-ui-plugin": "2.2.3",
-    "@vendure/asset-server-plugin": "2.2.3",
-    "@vendure/core": "2.2.3",
+    "@vendure/admin-ui-plugin": "2.2.4",
+    "@vendure/asset-server-plugin": "2.2.4",
+    "@vendure/core": "2.2.4",
     "@vendure/create": "^2.2.3",
-    "@vendure/email-plugin": "2.2.3",
+    "@vendure/email-plugin": "2.2.4",
     "dotenv": "16.4.5",
     "pg": "8.11.5",
     "sharp": "^0.33.3",
-    "typescript": "5.3.3"
+    "typescript": "5.4.5"
   },
   "devDependencies": {
-    "@vendure/cli": "2.2.3",
+    "@vendure/cli": "2.2.4",
     "concurrently": "8.2.2"
   }
 }
