@@ -18,9 +18,11 @@
     "@vendure/core": "2.2.4",
     "@vendure/create": "^2.2.3",
     "@vendure/email-plugin": "2.2.4",
+    "@vendure/payments-plugin": "^2.2.4",
     "dotenv": "16.4.5",
     "pg": "8.11.5",
     "sharp": "^0.33.3",
+    "stripe": "^15.6.0",
     "typescript": "5.4.5"
   },
   "devDependencies": {

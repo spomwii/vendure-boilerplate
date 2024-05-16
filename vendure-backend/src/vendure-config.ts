@@ -7,6 +7,7 @@ import {
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
+import { StripePlugin } from '@vendure/payments-plugin/package/stripe';
 import 'dotenv/config';
 import path from 'path';
 
@@ -68,6 +69,14 @@ export const config: VendureConfig = {
             // to be set manually to match your production url.
             assetUrlPrefix: IS_DEV ? undefined : `https://${process.env.PUBLIC_DOMAIN}/assets/`,
         }),
+        StripePlugin.init({
+            storeCustomersInStripe: true,
+            paymentIntentCreateParams: (injector, ctx, order) => {
+              return {
+                description: `Order #${order.code} for ${order.customer?.emailAddress}`
+              };
+            }
+          }),
         DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
         DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
         EmailPlugin.init({
