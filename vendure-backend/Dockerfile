@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY package.json ./
 COPY package-lock.json ./
-RUN npm install --production
+RUN npm install --production --legacy-peer-deps
 RUN npm install -g concurrently
 COPY . .
 RUN npm run build
