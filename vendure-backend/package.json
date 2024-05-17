@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "@vendure/cli": "2.2.4",
-    "concurrently": "8.2.2",
-    "ts-node": "^10.9.2"
+    "concurrently": "8.2.2"
   }
 }
