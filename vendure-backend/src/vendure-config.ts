@@ -27,18 +27,17 @@ class SendgridEmailSender {
     }
 }
 
-const standardEmailPluginConfig = {
-    handlers: defaultEmailHandlers,
-    templatePath: path.join(__dirname, '../static/email/templates'),
-    globalTemplateVars: {
-        // The following variables will change depending on your storefront implementation.
-        // Here we are assuming a storefront running at http://localhost:8080.
-        fromAddress: process.env.EMAIL_FROM_ADDRESS || '"example" <noreply@example.com>',
-        verifyEmailAddressUrl: `${process.env.STOREFRONT_URL}/verify`,
-        passwordResetUrl: `${process.env.STOREFRONT_URL}/password-reset`,
-        changeEmailAddressUrl: `${process.env.STOREFRONT_URL}/verify-email-address-change`
+const emailPluginOptions = isDev || !process.env.SENDGRID_API_KEY ? {
+    devMode: true,
+    outputPath: path.join(__dirname, '../static/email/test-emails'),
+    route: 'mailbox'
+} : {
+    emailSender: new SendgridEmailSender(),
+    transport: {
+        type: 'sendgrid',
+        apiKey: process.env.SENDGRID_API_KEY
     }
-}
+};
 
 export const config: VendureConfig = {
     apiOptions: {
@@ -107,13 +106,7 @@ export const config: VendureConfig = {
         DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
         DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
         EmailPlugin.init({
-            ...isDev ? {
-                devMode: true,
-                outputPath: path.join(__dirname, '../static/email/test-emails'),
-                route: 'mailbox',
-            } : {
-                emailSender: new SendgridEmailSender(),
-            },
+            ...emailPluginOptions,
             handlers: defaultEmailHandlers,
             templatePath: path.join(__dirname, '../static/email/templates'),
             globalTemplateVars: {
