@@ -8,7 +8,10 @@ WORKDIR /usr/src/app
 COPY package.json yarn.lock ./
 
 # Install dependencies using Yarn
-RUN yarn install --production --ignore-optional
+RUN yarn install --production
+
+# Explicitly install sharp@0.33.4
+RUN yarn add sharp@0.33.4
 
 # Install concurrently globally using Yarn
 RUN yarn global add concurrently
