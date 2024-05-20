@@ -1038,7 +1038,7 @@
     semver "^7.5.4"
     tcp-port-used "^1.0.2"
 
-"@vendure/email-plugin@^2.2.4":
+"@vendure/email-plugin@^2.2.3":
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/@vendure/email-plugin/-/email-plugin-2.2.4.tgz#56d9aba81ed0f51996af95c98258b79ee665d342"
   integrity sha512-gBWl1DIb1zKFwZHlPsRLrC+bexkfTZ/1eynFHR1a+pzsD4tLFn8/dG1/QbY/UPLTHrsDUUTjn6Sf9qKvQNM4BQ==

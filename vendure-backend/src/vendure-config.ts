@@ -116,8 +116,6 @@ export const config: VendureConfig = {
             handlers: defaultEmailHandlers,
             templatePath: path.join(__dirname, '../static/email/templates'),
             globalTemplateVars: {
-                // The following variables will change depending on your storefront implementation.
-                // Here we are assuming a storefront running at http://localhost:8080.
                 fromAddress: process.env.EMAIL_FROM_ADDRESS || '"example" <noreply@example.com>',
                 verifyEmailAddressUrl: `${process.env.STOREFRONT_URL}/verify`,
                 passwordResetUrl: `${process.env.STOREFRONT_URL}/password-reset`,
