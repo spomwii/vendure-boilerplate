@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY package.json yarn.lock ./
 
 # Install dependencies using Yarn
-RUN yarn install --production
+RUN yarn install --production --ignore-optional
 
 # Install concurrently globally using Yarn
 RUN yarn global add concurrently
