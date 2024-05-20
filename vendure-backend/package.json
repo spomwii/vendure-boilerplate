@@ -10,8 +10,7 @@
     "seed:once": "node ./dist/seed-once.js",
     "start:server": "node ./dist/index.js",
     "start:worker": "node ./dist/index-worker.js",
-    "start": "concurrently npm:start:*",
-    "postinstall": "yarn add sharp --ignore-engines"
+    "start": "concurrently npm:start:*"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.3",

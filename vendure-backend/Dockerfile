@@ -1,14 +1,23 @@
+# Use the official Node.js image from the Docker Hub
 FROM node:20
 
+# Set the working directory inside the container
 WORKDIR /usr/src/app
 
-COPY package.json ./
-COPY package-lock.json ./
-RUN npm install --production
-RUN npm install -g concurrently
+# Copy the package.json and yarn.lock files to the working directory
+COPY package.json yarn.lock ./
 
+# Install dependencies using Yarn
+RUN yarn install --production
+
+# Install concurrently globally using Yarn
+RUN yarn global add concurrently
+
+# Copy the rest of the application code to the working directory
 COPY . .
 
-RUN npm run build
+# Build the application
+RUN yarn build
 
-CMD ["sh", "-c", "npm run seed:once && npm run start"]
+# Define the command to run the application
+CMD ["sh", "-c", "yarn seed:once && yarn start"]
