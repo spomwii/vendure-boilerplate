@@ -7,9 +7,9 @@
     "dev:worker": "ts-node ./src/index-worker.ts",
     "dev": "concurrently npm:dev:*",
     "build": "tsc",
-    "seed:once": "ts-node ./src/seed-once.ts",
-    "start:server": "node ./dist/index.js",
-    "start:worker": "node ./dist/index-worker.js",
+    "seed:once": "ts-node ./dist/src/seed-once.ts",
+    "start:server": "node ./dist/src/index.js",
+    "start:worker": "node ./dist/src/index-worker.js",
     "start": "concurrently npm:start:*"
   },
   "dependencies": {
