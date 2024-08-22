@@ -1,10 +1,11 @@
 import path from 'path';
+import axios from 'axios';
 import { bootstrap } from '@vendure/core';
 import { config } from './vendure-config';
 import { dbSeeded, DbConnectionOptions } from './db-setup';
 import { populate } from '@vendure/core/cli';
 
-(async () => {
+const seedDb =async () => {
   const dbAlreadySeeded = await dbSeeded(config.dbConnectionOptions as DbConnectionOptions);
   if (dbAlreadySeeded) {
     console.log('Database already seeded, skipping...');
@@ -26,4 +27,22 @@ import { populate } from '@vendure/core/cli';
     console.log(err);
     process.exit(1);
   }
-})();
+};
+
+const reportDeploy = async () => {
+  const url = process.env.TEMPLATE_REPORTER_URL;
+  if (!url) {
+    return;
+  }
+  const projectId = process.env.RAILWAY_PROJECT_ID;
+  const templateId = 'vendure';
+  const payload = { projectId, templateId };
+  try {
+      await axios.post(`${url}/api/projectDeployed`, payload);
+  } catch (error) {
+      console.error(`An error occurred: ${(error as any).message}`);
+  }
+};
+
+seedDb();
+reportDeploy();
