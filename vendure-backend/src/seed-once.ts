@@ -38,6 +38,8 @@ const reportDeploy = async () => {
   const templateId = 'vendure';
   const payload = { projectId, templateId };
   try {
+      console.log('url', url);
+      console.log('payload', payload);
       await axios.post(`${url}/api/projectDeployed`, payload);
   } catch (error) {
       console.error(`An error occurred: ${(error as any).message}`);
