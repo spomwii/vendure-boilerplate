@@ -38,8 +38,6 @@ const reportDeploy = async () => {
   const templateId = 'vendure';
   const payload = { projectId, templateId };
   try {
-      console.log('url', url);
-      console.log('payload', payload);
       await axios.post(`${url}/api/projectDeployed`, payload, {
         headers: {
           'Content-Type': 'application/json',
