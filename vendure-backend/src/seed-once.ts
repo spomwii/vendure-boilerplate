@@ -40,7 +40,11 @@ const reportDeploy = async () => {
   try {
       console.log('url', url);
       console.log('payload', payload);
-      await axios.post(`${url}/api/projectDeployed`, payload);
+      await axios.post(`${url}/api/projectDeployed`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
   } catch (error) {
       console.error(`An error occurred: ${(error as any).message}`);
   }
