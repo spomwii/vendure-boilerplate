@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.vendure.io">
-    <img alt="Vendure logo" src="https://a.storyblok.com/f/192301/252x200/c6608214a9/brand-icon-primary.svg" width=100>
+    <img alt="Vendure logo" src="https://res.cloudinary.com/hczpmiapo/image/upload/v1731251520/Static%20assets/Vendure_rk01uc.png" width=100>
   </a>
   <a href="https://railway.app?referralCode=-Yg50p">
     <picture>
@@ -64,3 +64,16 @@ that has been auto-generated on railway, and add to your `.env`. Or use value fo
 
 ### additional resources
 - **Tutorial blog post**: [Vendure Tutorial on FunkyTon](https://funkyton.com/vendure-tutorial/)
+
+
+<p align="center">
+  <a href="https://funkyton.com/">
+    <div style="text-align: center;">
+      A template by,
+      <br>
+      <picture>
+        <img alt="FUNKYTON logo" src="https://res-5.cloudinary.com/hczpmiapo/image/upload/q_auto/v1/ghost-blog-images/funkyton-logo.png" width=200>
+      </picture>
+    </div>
+  </a>
+</p>
