@@ -1,11 +1,11 @@
 <p align="center">
   <a href="https://www.vendure.io">
-    <img alt="Vendure logo" src="https://demo.vendure.io/logo.png" width=100>
+    <img alt="Vendure logo" src="https://a.storyblok.com/f/192301/252x200/c6608214a9/brand-icon-primary.svg" width=100>
   </a>
   <a href="https://railway.app?referralCode=-Yg50p">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://railway.app/brand/logo-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://railway.app/brand/logo-light.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="https://railway.app/brand/logo-light.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://railway.app/brand/logo-dark.svg">
       <img alt="Railway logo" src="https://railway.app/brand/logo-light.svg" width=100>
     </picture>
   </a>
