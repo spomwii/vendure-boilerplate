@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.vendure.io">
-    <img alt="Vendure logo" src="https://res.cloudinary.com/hczpmiapo/image/upload/v1731251520/Static%20assets/Vendure_rk01uc.png" width=100>
+    <img alt="Vendure logo" src="https://res.cloudinary.com/hczpmiapo/image/upload/v1731251520/Static%20assets/Logos/Vendure_rk01uc.png" width=100>
   </a>
   <a href="https://railway.app?referralCode=-Yg50p">
     <picture>
@@ -63,17 +63,15 @@ that has been auto-generated on railway, and add to your `.env`. Or use value fo
 `yarn start` or `npm run start` will start the backend server and serve admin dashboard. at: `localhost:3000/admin`
 
 ### additional resources
-- **Tutorial blog post**: [Vendure Tutorial on FunkyTon](https://funkyton.com/vendure-tutorial/)
+- **Tutorial blog post**: [Vendure Tutorial on Funkyton](https://funkyton.com/vendure-tutorial/)
 
 
 <p align="center">
   <a href="https://funkyton.com/">
-    <div style="text-align: center;">
-      A template by,
-      <br>
-      <picture>
-        <img alt="FUNKYTON logo" src="https://res-5.cloudinary.com/hczpmiapo/image/upload/q_auto/v1/ghost-blog-images/funkyton-logo.png" width=200>
-      </picture>
-    </div>
+    A template by,
+    <br><br>
+    <picture>
+      <img alt="FUNKYTON logo" src="https://res-5.cloudinary.com/hczpmiapo/image/upload/q_auto/v1/ghost-blog-images/funkyton-logo.png" width=200>
+    </picture>
   </a>
 </p>
