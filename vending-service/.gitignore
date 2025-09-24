@@ -1,0 +1,5 @@
+# ignore env files
+*.env
+vending-service/.env
+# ignore node modules of services if not already
+vending-service/node_modules
