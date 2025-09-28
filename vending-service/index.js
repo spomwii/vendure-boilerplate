@@ -256,5 +256,13 @@ async function sendReceiptEmail(toEmail, orderId, door) {
 // health endpoint
 app.get('/', (req, res) => res.send('Vending service running'));
 
+// GET /door/:doorId  -> returns { door: 1, deviceId: 'esp-test-1', portIndex: 0, productSku: 'SKU-ABC' }
+app.get('/door/:doorId', (req, res) => {
+  const door = Number(req.params.doorId);
+  const map = doorMap[door];
+  if (!map) return res.status(404).json({ error: 'No mapping' });
+  return res.json({ door, ...map });
+});
+
 // Start HTTP server
 app.listen(PORT, () => console.log(`Vending microservice listening on port ${PORT}`));
