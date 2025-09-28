@@ -1,5 +1,6 @@
-// send-event.js
+// send-event.js (decode token and publish event with token.orderId)
 const mqtt = require('mqtt');
+const jwt = require('jsonwebtoken');
 
 const host = process.env.MQTT_HOST || 'broker.hivemq.cloud';
 const port = process.env.MQTT_PORT || '8883';
@@ -13,6 +14,15 @@ if (!token) {
   process.exit(1);
 }
 
+// decode token (no verification needed for simulation; you can verify if you have JWT_SECRET)
+const decoded = jwt.decode(token);
+if (!decoded || !decoded.orderId || !decoded.door) {
+  // if your token doesn't include door, fall back to door arg or 1
+  const door = process.argv[3] ? Number(process.argv[3]) : 1;
+  decoded.orderId = decoded.orderId || process.argv[4] || 'sim-order';
+  decoded.door = decoded.door || door;
+}
+
 const client = mqtt.connect(url, { username, password, rejectUnauthorized: false });
 
 client.on('connect', () => {
@@ -20,8 +30,8 @@ client.on('connect', () => {
   const topic = `vending/${deviceId}/events`;
   const payload = JSON.stringify({
     type: 'door_open',
-    door: 1,
-    orderId: 'test-order-123',
+    door: decoded.door,
+    orderId: decoded.orderId,
     token,
     timestamp: new Date().toISOString()
   });

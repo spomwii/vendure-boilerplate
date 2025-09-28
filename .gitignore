@@ -1,0 +1,6 @@
+
+# runtime secrets & token store
+*.env
+vending-service/.env
+vending-service/token-store.json
+node_modules

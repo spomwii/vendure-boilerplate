@@ -3,3 +3,8 @@
 vending-service/.env
 # ignore node modules of services if not already
 vending-service/node_modules
+# runtime secrets & token store
+*.env
+vending-service/.env
+vending-service/token-store.json
+vending-service/node_modules
