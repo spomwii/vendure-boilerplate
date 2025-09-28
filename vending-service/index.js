@@ -1,5 +1,7 @@
 // index.js
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mqtt = require('mqtt');
@@ -7,8 +9,18 @@ const jwt = require('jsonwebtoken');
 const sgMail = require('@sendgrid/mail');
 
 const app = express();
-app.use(bodyParser.json());
 
+// Save raw request body on parse errors to help debug malformed JSON
+const rawBodySaver = function (req, res, buf, encoding) {
+  try {
+    req.rawBody = buf.toString(encoding || 'utf8');
+  } catch (e) {
+    req.rawBody = '';
+  }
+};
+app.use(bodyParser.json({ verify: rawBodySaver }));
+
+// Load configuration from environment (Railway service variables recommended)
 const {
   MQTT_HOST,
   MQTT_PORT,
@@ -22,6 +34,7 @@ const {
   PORT = 4000
 } = process.env;
 
+// Basic required env checks (fail early to avoid unclear behavior)
 if (!MQTT_HOST || !MQTT_PORT) {
   console.error('Please set MQTT_HOST and MQTT_PORT in env');
   process.exit(1);
@@ -32,14 +45,63 @@ if (!JWT_SECRET) {
 }
 if (!SENDGRID_API_KEY) {
   console.warn('No SENDGRID_API_KEY set - emails will not be sent');
-}
-
-if (SENDGRID_API_KEY) {
+} else {
   sgMail.setApiKey(SENDGRID_API_KEY);
 }
 
+// Token store (persistent) - expects vending-service/token-store.json to be created/managed by module
+const tokenStorePath = path.join(__dirname, 'token-store.json');
+function readTokenStore() {
+  try {
+    if (!fs.existsSync(tokenStorePath)) return {};
+    const raw = fs.readFileSync(tokenStorePath, 'utf8');
+    return JSON.parse(raw || '{}');
+  } catch (err) {
+    console.error('Failed to read token-store file', err);
+    return {};
+  }
+}
+function writeTokenStore(store) {
+  try {
+    fs.writeFileSync(tokenStorePath, JSON.stringify(store, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to write token-store file', err);
+  }
+}
+const tokenStore = readTokenStore();
+// helpers for token store
+function tokenSet(token, info) {
+  tokenStore[token] = info;
+  writeTokenStore(tokenStore);
+}
+function tokenGet(token) {
+  return tokenStore[token];
+}
+function tokenMarkUsed(token) {
+  if (tokenStore[token]) {
+    tokenStore[token].used = true;
+    writeTokenStore(tokenStore);
+  }
+}
+function tokenCleanupExpired() {
+  const now = Math.floor(Date.now() / 1000);
+  let changed = false;
+  for (const t of Object.keys(tokenStore)) {
+    const info = tokenStore[t];
+    if (info && info.exp && info.exp < now) {
+      delete tokenStore[t];
+      changed = true;
+    }
+  }
+  if (changed) writeTokenStore(tokenStore);
+}
+setInterval(tokenCleanupExpired, 60 * 1000);
+
+// MQTT client setup
 const mqttProtocol = (MQTT_TLS === 'true' || MQTT_TLS === '1') ? 'mqtts' : 'mqtt';
 const mqttUrl = `${mqttProtocol}://${MQTT_HOST}:${MQTT_PORT}`;
+
+// For POC allow insecure TLS (no cert validation). In production replace with setCACert(...) and remove setInsecure().
 const mqttOptions = {
   username: MQTT_USERNAME,
   password: MQTT_PASSWORD,
@@ -56,8 +118,17 @@ client.on('connect', () => {
   });
 });
 
-client.on('error', (err) => console.error('MQTT error', err));
+client.on('error', (err) => {
+  console.error('MQTT error', err);
+});
 
+// Simple door mapping (for POC). Replace with DB or file later.
+const doorMap = {
+  1: { deviceId: 'esp-test-1', portIndex: 0, productSku: 'SKU-ABC' },
+  2: { deviceId: 'esp-test-1', portIndex: 1, productSku: 'SKU-XYZ' }
+};
+
+// Publish unlock command to device
 function publishUnlock(deviceId, portIndex, orderId, token, durationMs = 1000) {
   const topic = `vending/${deviceId}/cmd`;
   const payload = { type: 'unlock', port: portIndex, orderId, token, durationMs };
@@ -68,29 +139,11 @@ function publishUnlock(deviceId, portIndex, orderId, token, durationMs = 1000) {
   });
 }
 
-const doorMap = {
-  1: { deviceId: 'esp-test-1', portIndex: 0, productSku: 'SKU-ABC' },
-  2: { deviceId: 'esp-test-1', portIndex: 1, productSku: 'SKU-XYZ' }
-};
-
-const tokenStore = new Map();
-
-function storeToken(token, info) {
-  tokenStore.set(token, { ...info, used: false });
-}
-
-setInterval(() => {
-  const now = Math.floor(Date.now() / 1000);
-  for (const [token, info] of tokenStore.entries()) {
-    if (info.exp && info.exp < now) tokenStore.delete(token);
-  }
-}, 60 * 1000);
-
+// API: issue token and publish unlock
 app.post('/unlock', async (req, res) => {
   try {
     const { orderId, door, email } = req.body;
     if (!orderId || !door) return res.status(400).json({ error: 'orderId and door are required' });
-
     const map = doorMap[door];
     if (!map) return res.status(400).json({ error: `No mapping for door ${door}` });
 
@@ -98,7 +151,7 @@ app.post('/unlock', async (req, res) => {
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     const decoded = jwt.decode(token);
-    storeToken(token, { orderId, door, email, exp: decoded.exp });
+    tokenSet(token, { orderId, door, email, used: false, exp: decoded.exp });
 
     publishUnlock(map.deviceId, map.portIndex, orderId, token, 1000);
 
@@ -109,11 +162,23 @@ app.post('/unlock', async (req, res) => {
   }
 });
 
+// Error handler to show helpful message when JSON parse fails
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    console.error('JSON parse error, raw body was:', req.rawBody);
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  next(err);
+});
+
+// Handle incoming MQTT device events
 client.on('message', async (topic, message) => {
   try {
-    const payload = JSON.parse(message.toString());
+    const text = message.toString();
+    const payload = JSON.parse(text);
     console.log('MQTT message', topic, payload);
 
+    // topic format: vending/{deviceId}/events
     const parts = topic.split('/');
     const deviceId = parts[1];
 
@@ -124,6 +189,7 @@ client.on('message', async (topic, message) => {
         return;
       }
 
+      // Verify token signature and payload
       let decoded;
       try {
         decoded = jwt.verify(token, JWT_SECRET);
@@ -132,12 +198,14 @@ client.on('message', async (topic, message) => {
         return;
       }
 
+      // Check that token/order match
       if (decoded.orderId !== orderId || decoded.door !== door) {
         console.warn('Token payload mismatch vs event', { decoded, payload });
         return;
       }
 
-      const record = tokenStore.get(token);
+      // Check persisted token store (single-use)
+      const record = tokenGet(token);
       if (!record) {
         console.warn('Token not found (maybe expired or not issued by us)');
         return;
@@ -146,12 +214,12 @@ client.on('message', async (topic, message) => {
         console.warn('Token already used; ignoring');
         return;
       }
-      record.used = true;
-      tokenStore.set(token, record);
+      tokenMarkUsed(token);
 
       console.log(`Door ${door} opened for order ${orderId} on device ${deviceId} at ${timestamp}`);
 
-      if (record.email) {
+      // Send receipt email if present
+      if (record.email && SENDGRID_API_KEY) {
         try {
           await sendReceiptEmail(record.email, orderId, door);
           console.log('Receipt email sent to', record.email);
@@ -161,18 +229,20 @@ client.on('message', async (topic, message) => {
       } else {
         console.log('No email provided for order', orderId);
       }
+
+      // TODO: integrate with Vendure Admin API to mark fulfillment
     }
   } catch (err) {
     console.error('Error handling MQTT message', err);
   }
 });
 
+// Email helper using SendGrid
 async function sendReceiptEmail(toEmail, orderId, door) {
   if (!SENDGRID_API_KEY) {
     console.warn('SENDGRID_API_KEY not set; skipping email');
     return;
   }
-
   const msg = {
     to: toEmail,
     from: FROM_EMAIL,
@@ -183,6 +253,8 @@ async function sendReceiptEmail(toEmail, orderId, door) {
   return sgMail.send(msg);
 }
 
+// health endpoint
 app.get('/', (req, res) => res.send('Vending service running'));
 
+// Start HTTP server
 app.listen(PORT, () => console.log(`Vending microservice listening on port ${PORT}`));
