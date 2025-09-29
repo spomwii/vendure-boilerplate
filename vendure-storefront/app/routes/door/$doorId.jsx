@@ -1,5 +1,5 @@
 // app/routes/door/$doorId.jsx  (Remix)
-import { useLoaderData } from 'remix';
+import { useLoaderData } from '@remix-run/react';
 
 export const loader = async ({ params }) => {
   const res = await fetch(
