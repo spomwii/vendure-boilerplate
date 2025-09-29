@@ -4,3 +4,6 @@
 vending-service/.env
 vending-service/token-store.json
 node_modules
+
+# ignore vending-service node_modules
+vending-service/node_modules
