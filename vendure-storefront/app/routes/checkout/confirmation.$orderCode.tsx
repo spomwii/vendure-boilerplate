@@ -1,77 +1,69 @@
-// app/routes/confirmation.$orderCode.tsx
+// app/routes/checkout/confirmation.$orderCode.tsx
 import type { DataFunctionArgs } from '@remix-run/server-runtime';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CartContents } from '~/components/cart/CartContents';
 import { CartTotals } from '~/components/cart/CartTotals';
 import { OrderDetailFragment } from '~/generated/graphql';
-import { getOrderByCode } from '~/providers/orders/order'; // adapt if your project uses a different path
+import { getOrderByCode } from '~/providers/orders/order';
 import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/solid';
 import { useTranslation } from 'react-i18next';
 
 type LoaderData = {
   order: OrderDetailFragment | null;
   vendingServiceUrl: string;
+  error: boolean;
 };
 
-// Server loader: fetch order and expose vendingServiceUrl to the client
 export async function loader({ params, request }: DataFunctionArgs) {
   try {
     const order = await getOrderByCode(params.orderCode!, { request });
     const vendingServiceUrl = process.env.VENDING_SERVICE_URL || '';
-    return json<LoaderData>({ order, vendingServiceUrl });
+    return json<LoaderData>({ order, vendingServiceUrl, error: false });
   } catch (ex) {
-    return json<LoaderData>({ order: null, vendingServiceUrl: '' });
+    return json<LoaderData>({ order: null, vendingServiceUrl: '', error: true });
   }
 }
 
 export default function ConfirmationPage() {
   const { order, vendingServiceUrl } = useLoaderData<LoaderData>();
   const { t } = useTranslation();
-
-  // UI state
   const [unlocking, setUnlocking] = useState(false);
   const [unlockResult, setUnlockResult] = useState<string | null>(null);
   const [manualDoor, setManualDoor] = useState<number | ''>('');
-  const [useManualDoor, setUseManualDoor] = useState(false);
+  const [useManual, setUseManual] = useState(false);
 
   if (!order) {
     return (
       <div className="p-8">
-        <h2 className="text-2xl font-semibold">Order not found</h2>
-        <p>We could not find your order. Please check your order code.</p>
+        <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
+          {t ? t('checkout.orderNotFound') : 'Order not found'}
+        </h2>
       </div>
     );
   }
 
-  // Try to derive door number from the order object.
-  // Adjust these paths to match how your Vendure order stores metadata/custom fields.
+  // Try to find an explicit door mapping in order custom fields (adjust this to your setup)
   function getDoorNumberFromOrder(): number | null {
-    // Common places: customFields, metadata, or order lines' custom fields.
-    // Update the keys below if your project stores the door number differently.
     try {
-      // Example: order.customFields?.doorNumber
-      // @ts-ignore
+      // @ts-ignore - vendor-specific custom fields
       const cf = order?.customFields;
       if (cf && cf.doorNumber) {
         const n = Number(cf.doorNumber);
         if (!isNaN(n)) return n;
       }
-
-      // Fallback: check first order line custom field or variant SKU -> we could call vending-service to map SKU->door.
+      // Try first line custom field as fallback
       const firstLine = order.lines && order.lines.length ? order.lines[0] : null;
       // @ts-ignore
       if (firstLine?.customFields?.doorNumber) {
         const n = Number(firstLine.customFields.doorNumber);
         if (!isNaN(n)) return n;
       }
-
-      // No door number found
-      return null;
-    } catch (err) {
-      return null;
+    } catch (e) {
+      // ignore and fallback
     }
+    return null;
   }
 
   const inferredDoor = getDoorNumberFromOrder();
@@ -81,17 +73,15 @@ export default function ConfirmationPage() {
     setUnlockResult(null);
 
     if (!vendingServiceUrl) {
-      setUnlockResult('Vending service URL not configured.');
+      setUnlockResult('Vending service not configured');
       setUnlocking(false);
       return;
     }
-
     try {
       const payload: Record<string, any> = {
-        orderId: order.code,
+        orderId: order!.code,
         door: doorNumber,
       };
-      // include email if present (optional)
       if (order?.customer?.email) payload.email = order.customer.email;
 
       const resp = await fetch(`${vendingServiceUrl}/unlock`, {
@@ -102,8 +92,7 @@ export default function ConfirmationPage() {
 
       const data = await resp.json().catch(() => null);
       if (!resp.ok) {
-        const err = data?.error || resp.statusText;
-        setUnlockResult(`Unlock failed: ${err}`);
+        setUnlockResult(`Unlock failed: ${data?.error || resp.statusText}`);
       } else {
         setUnlockResult('Unlock requested. If the door does not open, check the machine.');
       }
@@ -114,7 +103,6 @@ export default function ConfirmationPage() {
     }
   }
 
-  // UI: show order summary with Open door button
   return (
     <div className="p-8">
       <h2 className="text-3xl flex items-center space-x-2 font-light tracking-tight text-gray-900 my-8">
@@ -134,25 +122,23 @@ export default function ConfirmationPage() {
         <CartTotals order={order as OrderDetailFragment} />
       </div>
 
-      <div className="rounded-md bg-blue-50 p-4 my-8">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <InformationCircleIcon className="h-5 w-5 text-blue-400" />
-          </div>
-          <div className="ml-3 flex-1 md:flex md:justify-between">
-            <p className="text-sm text-blue-700">
-              {t ? t('checkout.paymentMessage') : 'Your payment has been processed.'}
-            </p>
+      {order.active && (
+        <div className="rounded-md bg-blue-50 p-4 my-8">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <InformationCircleIcon className="h-5 w-5 text-blue-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3 flex-1 md:flex md:justify-between">
+              <p className="text-sm text-blue-700">{t ? t('checkout.paymentMessage') : 'Your payment has been processed.'}</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="mt-6">
         <h3 className="text-xl font-medium">Open the vending machine</h3>
         <p className="text-sm text-gray-600 mb-3">
-          {inferredDoor
-            ? `Door ${inferredDoor} is mapped to this order (inferred from order data).`
-            : 'No door is mapped automatically for this order. Enter a door number to open.'}
+          {inferredDoor ? `Door ${inferredDoor} is mapped to this order.` : 'No door is mapped. Enter a door number to open.'}
         </p>
 
         {!inferredDoor && (
@@ -160,8 +146,8 @@ export default function ConfirmationPage() {
             <label className="block text-sm font-medium text-gray-700">Door number</label>
             <input
               type="number"
-              value={useManualInput() ? manualDoorValue() : ''}
-              onChange={(e) => setManualDoorInput(e.target.value ? Number(e.target.value) : '')}
+              value={useManual ? (manualDoor === '' ? '' : String(manualDoor)) : ''}
+              onChange={(e) => setManualDoor(e.target.value ? Number(e.target.value) : '')}
               className="mt-1 block w-40 rounded-md border-gray-300 shadow-sm"
               placeholder="1"
             />
@@ -182,15 +168,4 @@ export default function ConfirmationPage() {
       </div>
     </div>
   );
-
-  // helper functions for manual input (kept local within component)
-  function useManualInput() {
-    return !inferredDoor;
-  }
-  function manualDoorValue() {
-    return manualDoor === '' ? '' : String(manualDoor);
-  }
-  function setManualDoorInput(val: string | number) {
-    setManualDoor(val === '' ? '' : Number(val));
-  }
 }
