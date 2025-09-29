@@ -9,6 +9,10 @@ const jwt = require('jsonwebtoken');
 const sgMail = require('@sendgrid/mail');
 
 const app = express();
+const cors = require('cors');
+app.use(cors({ origin: '*' })); // POC only — restrict origin in production
+
+
 
 // Save raw request body on parse errors to help debug malformed JSON
 const rawBodySaver = function (req, res, buf, encoding) {
@@ -124,8 +128,8 @@ client.on('error', (err) => {
 
 // Simple door mapping (for POC). Replace with DB or file later.
 const doorMap = {
-  1: { deviceId: 'esp-test-1', portIndex: 0, productSku: 'SKU-ABC' },
-  2: { deviceId: 'esp-test-1', portIndex: 1, productSku: 'SKU-XYZ' }
+  1: { deviceId: 'esp-test-1', portIndex: 0, productSku: 'SKU-DOOR1' },
+  2: { deviceId: 'esp-test-1', portIndex: 1, productSku: 'SKU-DOOR2' }
 };
 
 // Publish unlock command to device
