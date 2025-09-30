@@ -9,6 +9,7 @@ import { OrderDetailFragment } from '~/generated/graphql';
 import { getOrderByCode } from '~/providers/orders/order';
 import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/solid';
 import { useTranslation } from 'react-i18next';
+import { getSessionStorage } from '~/sessions';
 
 type LoaderData = {
   order: OrderDetailFragment | null;
@@ -20,14 +21,26 @@ export async function loader({ params, request }: DataFunctionArgs) {
   try {
     const order = await getOrderByCode(params.orderCode!, { request });
     const vendingServiceUrl = process.env.VENDING_SERVICE_URL || '';
-    return json<LoaderData>({ order, vendingServiceUrl, error: false });
+    // Read and consume doorNumber from session for one-time auto-unlock attempt
+    const sessionStorage = await getSessionStorage();
+    const session = await sessionStorage.getSession(
+      request?.headers.get('Cookie'),
+    );
+    const doorNumber = session.get('doorNumber') as number | undefined;
+    // Do not clear yet; the client will perform unlock then we clear via header
+    const headers: Record<string, string> = {};
+    if (doorNumber !== undefined) {
+      session.unset('doorNumber');
+      headers['Set-Cookie'] = await sessionStorage.commitSession(session);
+    }
+    return json<LoaderData & { doorNumber?: number }>({ order, vendingServiceUrl, error: false, doorNumber }, { headers });
   } catch (ex) {
     return json<LoaderData>({ order: null, vendingServiceUrl: '', error: true });
   }
 }
 
 export default function ConfirmationPage() {
-  const { order, vendingServiceUrl } = useLoaderData<LoaderData>();
+  const { order, vendingServiceUrl, doorNumber } = useLoaderData<LoaderData & { doorNumber?: number }>();
   const { t } = useTranslation();
   const [unlocking, setUnlocking] = useState(false);
   const [unlockResult, setUnlockResult] = useState<string | null>(null);
@@ -67,6 +80,7 @@ export default function ConfirmationPage() {
   }
 
   const inferredDoor = getDoorNumberFromOrder();
+  const autoDoor = inferredDoor ?? (typeof doorNumber === 'number' ? doorNumber : null);
 
   async function handleOpenDoor(doorNumber: number) {
     setUnlocking(true);
@@ -103,6 +117,14 @@ export default function ConfirmationPage() {
     }
   }
 
+  // Auto-trigger unlock once if we have a door number from session or order
+  useEffect(() => {
+    if (!unlocking && !unlockResult && autoDoor) {
+      handleOpenDoor(autoDoor);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoDoor]);
+
   return (
     <div className="p-8">
       <h2 className="text-3xl flex items-center space-x-2 font-light tracking-tight text-gray-900 my-8">
@@ -138,10 +160,10 @@ export default function ConfirmationPage() {
       <div className="mt-6">
         <h3 className="text-xl font-medium">Open the vending machine</h3>
         <p className="text-sm text-gray-600 mb-3">
-          {inferredDoor ? `Door ${inferredDoor} is mapped to this order.` : 'No door is mapped. Enter a door number to open.'}
+          {autoDoor ? `Door ${autoDoor} is mapped to this order.` : 'No door is mapped. Enter a door number to open.'}
         </p>
 
-        {!inferredDoor && (
+        {!autoDoor && (
           <div className="mb-3">
             <label className="block text-sm font-medium text-gray-700">Door number</label>
             <input
@@ -156,11 +178,11 @@ export default function ConfirmationPage() {
 
         <div>
           <button
-            onClick={() => handleOpenDoor(inferredDoor ?? (manualDoor as number))}
+            onClick={() => handleOpenDoor(autoDoor ?? (manualDoor as number))}
             disabled={unlocking}
             className="px-4 py-2 rounded bg-blue-600 text-white"
           >
-            {unlocking ? 'Opening...' : `Open door #${inferredDoor ?? manualDoor}`}
+            {unlocking ? 'Opening...' : `Open door #${autoDoor ?? manualDoor}`}
           </button>
 
           {unlockResult && <div className="mt-3 text-sm text-gray-700">{unlockResult}</div>}

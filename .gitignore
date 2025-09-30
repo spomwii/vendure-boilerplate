@@ -4,3 +4,11 @@
 vending-service/.env
 vending-service/token-store.json
 node_modules
+
+# ignore vending-service node_modules
+vending-service/node_modules
+
+# ignore node_modules and runtime files
+**/node_modules
+*.env
+vending-service/token-store.json
