@@ -8,9 +8,12 @@ import { addItemToOrder } from '~/providers/orders/order';
 // Minimal landing: map door -> sku via vending-service, persist door in session,
 // resolve variant by SKU, add to cart, and go straight to payment.
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  console.log('Door route loader started');
   const doorId = params.doorId as string;
+  console.log('Door ID:', doorId);
   
   // Check if VENDING_SERVICE_URL is set
+  console.log('VENDING_SERVICE_URL:', process.env.VENDING_SERVICE_URL ? 'SET' : 'NOT SET');
   if (!process.env.VENDING_SERVICE_URL) {
     console.error('VENDING_SERVICE_URL not set');
     throw new Response('Vending service not configured - VENDING_SERVICE_URL environment variable is missing', { status: 500 });
@@ -93,7 +96,18 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   
   } catch (error) {
     console.error('Error in door route:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error type:', typeof error);
+    console.error('Error constructor:', error?.constructor?.name);
+    
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof error === 'object') {
+      errorMessage = JSON.stringify(error);
+    }
+    
     throw new Response(`Door route error: ${errorMessage}`, { status: 500 });
   }
 };
