@@ -13,7 +13,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // Check if VENDING_SERVICE_URL is set
   if (!process.env.VENDING_SERVICE_URL) {
     console.error('VENDING_SERVICE_URL not set');
-    throw new Response('Vending service not configured', { status: 500 });
+    throw new Response('Vending service not configured - VENDING_SERVICE_URL environment variable is missing', { status: 500 });
   }
   
   console.log(`Fetching door mapping for door ${doorId} from ${process.env.VENDING_SERVICE_URL}/door/${doorId}`);
@@ -93,7 +93,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   
   } catch (error) {
     console.error('Error in door route:', error);
-    throw new Response(`Door route error: ${error.message}`, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Response(`Door route error: ${errorMessage}`, { status: 500 });
   }
 };
 
