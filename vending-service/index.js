@@ -129,7 +129,13 @@ client.on('error', (err) => {
 // Simple door mapping (for POC). Replace with DB or file later.
 const doorMap = {
   1: { deviceId: 'esp-test-1', portIndex: 0, productSku: 'SKU-DOOR1' },
-  2: { deviceId: 'esp-test-1', portIndex: 1, productSku: 'SKU-DOOR2' }
+  2: { deviceId: 'esp-test-1', portIndex: 1, productSku: 'SKU-DOOR2' },
+  3: { deviceId: 'esp-test-1', portIndex: 2, productSku: 'SKU-DOOR3' },
+  4: { deviceId: 'esp-test-1', portIndex: 3, productSku: 'SKU-DOOR4' },
+  5: { deviceId: 'esp-test-1', portIndex: 4, productSku: 'SKU-DOOR5' },
+  6: { deviceId: 'esp-test-1', portIndex: 5, productSku: 'SKU-DOOR6' },
+  7: { deviceId: 'esp-test-1', portIndex: 6, productSku: 'SKU-DOOR7' },
+  8: { deviceId: 'esp-test-1', portIndex: 7, productSku: 'SKU-DOOR8' }
 };
 
 // Publish unlock command to device
