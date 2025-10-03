@@ -102,7 +102,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     console.error('Error constructor:', error?.constructor?.name);
     
     let errorMessage = 'Unknown error';
-    if (error instanceof Error) {
+    if (error instanceof Response) {
+      // If it's a Response object, try to get the text content
+      try {
+        const text = await error.text();
+        errorMessage = `Response ${error.status}: ${text}`;
+      } catch {
+        errorMessage = `Response ${error.status}: ${error.statusText}`;
+      }
+    } else if (error instanceof Error) {
       errorMessage = error.message;
     } else if (typeof error === 'string') {
       errorMessage = error;

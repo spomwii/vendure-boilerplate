@@ -1,5 +1,6 @@
 // Test vending service connectivity
 import type { LoaderFunctionArgs } from '@remix-run/server-runtime';
+import { useLoaderData } from '@remix-run/react';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   console.log('Testing vending service connectivity...');
@@ -44,15 +45,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function TestVendingPage() {
+  const data = useLoaderData<typeof loader>();
+  
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Testing Vending Service
         </h1>
-        <p className="text-gray-600">
-          Check the network tab or console for the response.
-        </p>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <pre className="text-sm text-gray-800 whitespace-pre-wrap">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        </div>
       </div>
     </div>
   );
