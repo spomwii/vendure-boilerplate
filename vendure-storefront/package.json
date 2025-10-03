@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "storefront-remix-starter",
+  "version": "1.0.1",
   "description": "",
   "license": "",
   "type": "module",
