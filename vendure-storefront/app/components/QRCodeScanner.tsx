@@ -16,7 +16,8 @@ export function QRCodeScanner({ onScan, onError }: QRCodeScannerProps) {
     import('react-qr-scanner').then((module) => {
       setQrReader(() => module.default);
     }).catch((err) => {
-      setError('Failed to load QR scanner');
+      console.error('Failed to load QR scanner:', err);
+      setError('Failed to load QR scanner. Please refresh the page.');
       onError?.(err);
     });
   }, [onError]);

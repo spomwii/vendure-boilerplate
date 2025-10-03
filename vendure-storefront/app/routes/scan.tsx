@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from '@remix-run/react';
 import { QRCodeScanner } from '~/components/QRCodeScanner';
 
 export default function ScanPage() {
   const [isScanning, setIsScanning] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Reset error state on mount
+    setError(null);
+  }, []);
 
   const handleScan = (result: string) => {
     console.log('QR Code scanned:', result);
@@ -30,6 +36,7 @@ export default function ScanPage() {
 
   const handleError = (error: Error) => {
     console.error('QR Scanner error:', error);
+    setError(`Scanner error: ${error.message}`);
   };
 
   return (
@@ -44,7 +51,22 @@ export default function ScanPage() {
           </p>
         </div>
 
-        {isScanning && (
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setIsScanning(true);
+              }}
+              className="mt-2 text-sm text-red-800 underline"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {isScanning && !error && (
           <QRCodeScanner
             onScan={handleScan}
             onError={handleError}
