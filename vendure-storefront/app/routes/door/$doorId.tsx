@@ -1,4 +1,4 @@
-// app/routes/door/$doorId.tsx (Remix) - Vending Machine Door Route
+// app/routes/door/$doorId.tsx (Remix) - Vending Machine Door Route - UPDATED
 import type { LoaderFunctionArgs } from '@remix-run/server-runtime';
 import { redirect } from '@remix-run/server-runtime';
 import { getSessionStorage } from '~/sessions';
