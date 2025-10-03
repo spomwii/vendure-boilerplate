@@ -9,11 +9,27 @@ import { addItemToOrder } from '~/providers/orders/order';
 // resolve variant by SKU, add to cart, and go straight to payment.
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const doorId = params.doorId as string;
-  const res = await fetch(
-    `${process.env.VENDING_SERVICE_URL}/door/${doorId}`,
-  );
-  if (!res.ok) throw new Response('Not found', { status: 404 });
-  const mapping: { door: number; deviceId: string; portIndex: number; productSku: string } = await res.json();
+  
+  // Check if VENDING_SERVICE_URL is set
+  if (!process.env.VENDING_SERVICE_URL) {
+    console.error('VENDING_SERVICE_URL not set');
+    throw new Response('Vending service not configured', { status: 500 });
+  }
+  
+  console.log(`Fetching door mapping for door ${doorId} from ${process.env.VENDING_SERVICE_URL}/door/${doorId}`);
+  
+  try {
+    const res = await fetch(
+      `${process.env.VENDING_SERVICE_URL}/door/${doorId}`,
+    );
+    
+    if (!res.ok) {
+      console.error(`Vending service returned ${res.status}: ${res.statusText}`);
+      throw new Response(`Vending service error: ${res.status}`, { status: res.status });
+    }
+    
+    const mapping: { door: number; deviceId: string; portIndex: number; productSku: string } = await res.json();
+    console.log('Door mapping received:', mapping);
 
   // Persist door number in session for later (confirmation auto-unlock)
   const sessionStorage = await getSessionStorage();
@@ -74,6 +90,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       'Set-Cookie': await sessionStorage.commitSession(session),
     },
   });
+  
+  } catch (error) {
+    console.error('Error in door route:', error);
+    throw new Response(`Door route error: ${error.message}`, { status: 500 });
+  }
 };
 
 // No UI; this route just redirects.
