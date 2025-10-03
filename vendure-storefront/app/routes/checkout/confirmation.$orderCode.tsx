@@ -7,7 +7,7 @@ import { CartContents } from '~/components/cart/CartContents';
 import { CartTotals } from '~/components/cart/CartTotals';
 import { OrderDetailFragment } from '~/generated/graphql';
 import { getOrderByCode } from '~/providers/orders/order';
-import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/solid';
+import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
 import { getSessionStorage } from '~/sessions';
 
