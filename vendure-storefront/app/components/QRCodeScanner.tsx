@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import QrReader from 'react-qr-scanner';
+import { useState, useEffect } from 'react';
 
 interface QRCodeScannerProps {
   onScan: (result: string) => void;
@@ -8,6 +7,19 @@ interface QRCodeScannerProps {
 
 export function QRCodeScanner({ onScan, onError }: QRCodeScannerProps) {
   const [error, setError] = useState<string | null>(null);
+  const [QrReader, setQrReader] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // Only import QrReader on the client side
+    import('react-qr-scanner').then((module) => {
+      setQrReader(() => module.default);
+    }).catch((err) => {
+      setError('Failed to load QR scanner');
+      onError?.(err);
+    });
+  }, [onError]);
 
   const handleScan = (data: string | null) => {
     if (data) {
@@ -19,6 +31,16 @@ export function QRCodeScanner({ onScan, onError }: QRCodeScannerProps) {
     setError(err.message);
     onError?.(err);
   };
+
+  if (!isClient || !QrReader) {
+    return (
+      <div className="w-full max-w-md mx-auto">
+        <div className="relative bg-gray-100 rounded-lg h-64 flex items-center justify-center">
+          <p className="text-gray-600">Loading QR scanner...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto">
