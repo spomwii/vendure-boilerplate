@@ -1,5 +1,4 @@
-import pkg from '@remix-run/dev';
-const { flatRoutes } = pkg;
+import { createRoutesFromFolders } from '@remix-run/v1-route-convention';
 
 /**
  * @type {import('@remix-run/dev').AppConfig}
@@ -13,8 +12,8 @@ const commonConfig = {
   ],
   tailwind: true,
   routes(defineRoutes) {
-    // uses the v2 flat routes convention
-    return flatRoutes('routes', defineRoutes);
+    // uses the v1 convention, works in v1.15+ and v2
+    return createRoutesFromFolders(defineRoutes);
   },
 };
 
@@ -24,7 +23,6 @@ const commonConfig = {
 const railwayConfig = {
   serverBuildPath: "./build/index.js",
   serverBuildDirectory: "build",
-  ignoredRouteFiles: [".*"],
   sourcemap: false,
   ...commonConfig,
 };
