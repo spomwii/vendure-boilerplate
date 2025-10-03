@@ -1,4 +1,5 @@
-import { flatRoutes } from '@remix-run/dev';
+import pkg from '@remix-run/dev';
+const { flatRoutes } = pkg;
 
 /**
  * @type {import('@remix-run/dev').AppConfig}
