@@ -28,7 +28,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     
     if (!res.ok) {
       console.error(`Vending service returned ${res.status}: ${res.statusText}`);
-      throw new Response(`Vending service error: ${res.status}`, { status: res.status });
+      const errorText = await res.text();
+      console.error('Vending service error response:', errorText);
+      throw new Response(`Vending service error ${res.status}: ${errorText}`, { status: res.status });
     }
     
     const mapping: { door: number; deviceId: string; portIndex: number; productSku: string } = await res.json();
