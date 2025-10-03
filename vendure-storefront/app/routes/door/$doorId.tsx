@@ -19,12 +19,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw new Response('Vending service not configured - VENDING_SERVICE_URL environment variable is missing', { status: 500 });
   }
   
-  console.log(`Fetching door mapping for door ${doorId} from ${process.env.VENDING_SERVICE_URL}/door/${doorId}`);
+  // Ensure no double slashes in URL
+  const baseUrl = process.env.VENDING_SERVICE_URL.replace(/\/$/, '');
+  const doorUrl = `${baseUrl}/door/${doorId}`;
+  
+  console.log(`Fetching door mapping for door ${doorId} from ${doorUrl}`);
   
   try {
-    const res = await fetch(
-      `${process.env.VENDING_SERVICE_URL}/door/${doorId}`,
-    );
+    const res = await fetch(doorUrl);
     
     if (!res.ok) {
       console.error(`Vending service returned ${res.status}: ${res.statusText}`);
