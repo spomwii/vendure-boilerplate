@@ -68,8 +68,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     });
   }
 
-  // 4) go directly to payment selection
-  return redirect('/checkout/payment', {
+  // 4) go directly to vending checkout (simplified flow)
+  return redirect('/checkout/vending', {
     headers: {
       'Set-Cookie': await sessionStorage.commitSession(session),
     },

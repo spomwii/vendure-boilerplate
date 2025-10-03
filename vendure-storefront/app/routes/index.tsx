@@ -1,7 +1,7 @@
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, Link } from '@remix-run/react';
 import { getCollections } from '~/providers/collections/collections';
 import { CollectionCard } from '~/components/collections/CollectionCard';
-import { BookOpenIcon } from '@heroicons/react/24/solid';
+import { BookOpenIcon, QrCodeIcon } from '@heroicons/react/24/solid';
 import { LoaderArgs } from '@remix-run/server-runtime';
 import { useTranslation } from 'react-i18next';
 
@@ -68,6 +68,17 @@ export default function Index() {
               {t('vendure.link')}
             </a>
           </p>
+          
+          {/* Vending Machine QR Scanner Button */}
+          <div className="mt-8">
+            <Link
+              to="/scan"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <QrCodeIcon className="w-5 h-5 mr-2" />
+              Scan QR Code for Vending Machine
+            </Link>
+          </div>
         </div>
       </div>
 
