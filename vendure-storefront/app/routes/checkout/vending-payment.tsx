@@ -204,37 +204,50 @@ export default function VendingPayment() {
         </div>
       </div>
 
-      {/* Stripe Payment */}
-      <div className="bg-white border rounded-lg p-6">
-        {stripeError ? (
-          <div className="text-center">
-            <p className="text-red-700 font-bold mb-2">
-              Payment Setup Error
-            </p>
-            <p className="text-sm text-red-600">{stripeError}</p>
+          {/* Stripe Payment */}
+          <div className="bg-white border rounded-lg p-6">
+            {stripeError ? (
+              <div className="text-center">
+                <p className="text-red-700 font-bold mb-2">
+                  Payment Setup Error
+                </p>
+                <p className="text-sm text-red-600">{stripeError}</p>
+                <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+                  <strong>Debug Info:</strong><br/>
+                  Payment intent: {stripePaymentIntent ? 'Set' : 'Missing'}<br/>
+                  Publishable key: {stripePublishableKey ? 'Set' : 'Missing'}<br/>
+                  Active order: {activeOrder ? 'Yes' : 'No'}<br/>
+                  Order code: {activeOrder?.code || 'None'}
+                </div>
+              </div>
+            ) : !stripePaymentIntent || !stripePublishableKey ? (
+              <div className="text-center">
+                <p className="text-red-700 font-bold mb-2">
+                  Stripe Configuration Missing
+                </p>
+                <p className="text-sm text-red-600">
+                  Payment intent: {stripePaymentIntent ? 'Set' : 'Missing'}<br/>
+                  Publishable key: {stripePublishableKey ? 'Set' : 'Missing'}<br/>
+                  {stripeError && `Error: ${stripeError}`}
+                </p>
+                <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+                  <strong>Debug Info:</strong><br/>
+                  Active order: {activeOrder ? 'Yes' : 'No'}<br/>
+                  Order code: {activeOrder?.code || 'None'}<br/>
+                  Order lines: {activeOrder?.lines?.length || 0}
+                </div>
+              </div>
+            ) : (
+              <div>
+                {/* Stripe Payment */}
+                <StripePayments
+                  clientSecret={stripePaymentIntent}
+                  publishableKey={stripePublishableKey}
+                  orderCode={activeOrder?.code ?? ''}
+                />
+              </div>
+            )}
           </div>
-        ) : !stripePaymentIntent || !stripePublishableKey ? (
-          <div className="text-center">
-            <p className="text-red-700 font-bold mb-2">
-              Stripe Configuration Missing
-            </p>
-            <p className="text-sm text-red-600">
-              Payment intent: {stripePaymentIntent ? 'Set' : 'Missing'}<br/>
-              Publishable key: {stripePublishableKey ? 'Set' : 'Missing'}<br/>
-              {stripeError && `Error: ${stripeError}`}
-            </p>
-          </div>
-        ) : (
-          <div>
-            {/* Stripe Payment */}
-            <StripePayments
-              clientSecret={stripePaymentIntent}
-              publishableKey={stripePublishableKey}
-              orderCode={activeOrder?.code ?? ''}
-            />
-          </div>
-        )}
-      </div>
 
       {paymentError && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
