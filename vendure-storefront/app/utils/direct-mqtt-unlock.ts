@@ -18,8 +18,11 @@ export class DirectMQTTUnlock {
 
   private async initializeMQTT() {
     try {
+      console.log('Initializing direct MQTT unlock...');
+      
       // Dynamic import for MQTT client (browser only)
       const mqtt = await import('mqtt');
+      console.log('MQTT library loaded successfully');
       
       // Connect to HiveMQ with unique client ID
       const MQTT_HOST = 'b99daae87ec445fc8d048c084732a6ca.s1.eu.hivemq.cloud';
@@ -28,32 +31,61 @@ export class DirectMQTTUnlock {
       const MQTT_PASS = '4P1VQ7Z2jRItKCLgyI0MagNo';
       
       const clientId = 'storefront-unlock-' + Math.random().toString(36).substr(2, 9);
+      console.log('Connecting to MQTT with client ID:', clientId);
       
       this.mqttClient = mqtt.connect(`mqtts://${MQTT_HOST}:${MQTT_PORT}`, {
         username: MQTT_USER,
         password: MQTT_PASS,
         clientId: clientId,
         clean: true, // Clean session to avoid conflicts
-        reconnectPeriod: 0 // Don't auto-reconnect to avoid conflicts
+        reconnectPeriod: 0, // Don't auto-reconnect to avoid conflicts
+        connectTimeout: 10000, // 10 second timeout
+        keepalive: 60
       });
 
       this.mqttClient.on('connect', () => {
-        console.log('Direct MQTT unlock connected');
+        console.log('✅ Direct MQTT unlock connected successfully');
         this.isConnected = true;
       });
 
       this.mqttClient.on('error', (error: any) => {
-        console.error('Direct MQTT unlock error:', error);
+        console.error('❌ Direct MQTT unlock error:', error);
         this.isConnected = false;
       });
 
       this.mqttClient.on('offline', () => {
-        console.log('Direct MQTT unlock offline');
+        console.log('📴 Direct MQTT unlock offline');
         this.isConnected = false;
       });
 
+      this.mqttClient.on('close', () => {
+        console.log('🔌 Direct MQTT unlock connection closed');
+        this.isConnected = false;
+      });
+
+      // Wait for connection with timeout
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          if (!this.isConnected) {
+            console.error('❌ MQTT connection timeout');
+            reject(new Error('MQTT connection timeout'));
+          }
+        }, 15000); // 15 second timeout
+
+        this.mqttClient.on('connect', () => {
+          clearTimeout(timeout);
+          resolve(true);
+        });
+
+        this.mqttClient.on('error', (error: any) => {
+          clearTimeout(timeout);
+          reject(error);
+        });
+      });
+
     } catch (error) {
-      console.error('Failed to initialize direct MQTT unlock:', error);
+      console.error('❌ Failed to initialize direct MQTT unlock:', error);
+      throw error;
     }
   }
 
