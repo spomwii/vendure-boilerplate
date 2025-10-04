@@ -151,6 +151,18 @@ export default function ConfirmationPage() {
 
       if (response.ok) {
         setUnlockResult(`Door #${door} unlocked successfully!`);
+        
+        // Clear the cart after successful unlock (for vending machine workflow)
+        try {
+          await fetch('/api/active-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=clearOrder'
+          });
+          console.log('Cart cleared after successful door unlock');
+        } catch (e) {
+          console.log('Failed to clear cart:', e);
+        }
       } else {
         const error = await response.text();
         setUnlockResult(`Failed to unlock door #${door}: ${error}`);
