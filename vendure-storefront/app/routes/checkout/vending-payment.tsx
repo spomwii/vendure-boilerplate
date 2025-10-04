@@ -224,7 +224,12 @@ export default function VendingPayment() {
                 <strong>Debug Mode:</strong> Using simple test form instead of Stripe
               </p>
             </div>
-            <SimpleCheckoutForm orderCode={activeOrder?.code ?? ''} />
+            <SimpleCheckoutForm 
+              orderCode={activeOrder?.code ?? ''} 
+              onPaymentSuccess={(orderCode) => {
+                window.location.href = `/checkout/confirmation/${orderCode}`;
+              }}
+            />
           </div>
         )}
       </div>

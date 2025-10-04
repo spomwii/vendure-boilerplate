@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { CreditCardIcon } from '@heroicons/react/24/solid';
 
-export const SimpleCheckoutForm = ({ orderCode }: { orderCode: string }) => {
+export const SimpleCheckoutForm = ({ 
+  orderCode, 
+  onPaymentSuccess 
+}: { 
+  orderCode: string;
+  onPaymentSuccess: (orderCode: string) => void;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -14,8 +20,28 @@ export const SimpleCheckoutForm = ({ orderCode }: { orderCode: string }) => {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // For now, just redirect to confirmation
-      window.location.href = `/checkout/confirmation/${orderCode}`;
+      // Create a real payment by calling the payment action
+      const formData = new FormData();
+      formData.append('paymentMethodCode', 'stripe');
+      formData.append('paymentNonce', 'test-payment-nonce');
+      
+      const response = await fetch('/checkout/vending-payment', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        // The server will redirect us to the confirmation page
+        const redirectUrl = response.url;
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          // Fallback: use the current order code
+          onPaymentSuccess(orderCode);
+        }
+      } else {
+        throw new Error('Payment failed');
+      }
     } catch (error) {
       setMessage('Payment failed. Please try again.');
       setIsLoading(false);
