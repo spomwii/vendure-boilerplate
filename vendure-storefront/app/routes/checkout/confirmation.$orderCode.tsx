@@ -2,19 +2,15 @@
 import type { DataFunctionArgs } from '@remix-run/server-runtime';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { useState, useEffect } from 'react';
-import { CartContents } from '~/components/cart/CartContents';
-import { CartTotals } from '~/components/cart/CartTotals';
-import { OrderDetailFragment } from '~/generated/graphql';
+import { useState } from 'react';
 import { getOrderByCode } from '~/providers/orders/order';
-import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
-import { useTranslation } from 'react-i18next';
 import { getSessionStorage } from '~/sessions';
 
 type LoaderData = {
-  order: OrderDetailFragment | null;
+  order: any | null;
   vendingServiceUrl: string;
   error: boolean;
+  doorNumber?: number;
 };
 
 export async function loader({ params, request }: DataFunctionArgs) {
@@ -58,8 +54,8 @@ export async function loader({ params, request }: DataFunctionArgs) {
         headers['Set-Cookie'] = await sessionStorage.commitSession(session);
       }
       
-      return json<LoaderData & { doorNumber?: number }>({ 
-        order: mockOrder as any, 
+      return json<LoaderData>({ 
+        order: mockOrder, 
         vendingServiceUrl, 
         error: false, 
         doorNumber 
@@ -75,7 +71,6 @@ export async function loader({ params, request }: DataFunctionArgs) {
     }
     
     const vendingServiceUrl = process.env.VENDING_SERVICE_URL || '';
-    // Read and consume doorNumber from session for one-time auto-unlock attempt
     const sessionStorage = await getSessionStorage();
     const session = await sessionStorage.getSession(
       request?.headers.get('Cookie'),
@@ -83,13 +78,12 @@ export async function loader({ params, request }: DataFunctionArgs) {
     const doorNumber = session.get('doorNumber') as number | undefined;
     console.log('Door number from session:', doorNumber);
     
-    // Do not clear yet; the client will perform unlock then we clear via header
     const headers: Record<string, string> = {};
     if (doorNumber !== undefined) {
       session.unset('doorNumber');
       headers['Set-Cookie'] = await sessionStorage.commitSession(session);
     }
-    return json<LoaderData & { doorNumber?: number }>({ order, vendingServiceUrl, error: false, doorNumber }, { headers });
+    return json<LoaderData>({ order, vendingServiceUrl, error: false, doorNumber }, { headers });
   } catch (ex) {
     console.error('Error in confirmation loader:', ex);
     return json<LoaderData>({ order: null, vendingServiceUrl: '', error: true });
@@ -97,12 +91,9 @@ export async function loader({ params, request }: DataFunctionArgs) {
 }
 
 export default function ConfirmationPage() {
-  const { order, vendingServiceUrl, doorNumber, error } = useLoaderData<LoaderData & { doorNumber?: number }>();
-  const { t } = useTranslation();
+  const { order, vendingServiceUrl, doorNumber, error } = useLoaderData<LoaderData>();
   const [unlocking, setUnlocking] = useState(false);
   const [unlockResult, setUnlockResult] = useState<string | null>(null);
-  const [manualDoor, setManualDoor] = useState<number | ''>('');
-  const [useManual, setUseManual] = useState(false);
 
   console.log('ConfirmationPage rendered with:', { order: !!order, error, doorNumber });
 
@@ -123,7 +114,7 @@ export default function ConfirmationPage() {
     return (
       <div className="p-8">
         <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
-          {t ? t('checkout.orderNotFound') : 'Order not found'}
+          Order not found
         </h2>
         <p className="text-gray-600">
           The order could not be found. Please check the order code and try again.
@@ -132,157 +123,96 @@ export default function ConfirmationPage() {
     );
   }
 
-  // Try to find an explicit door mapping in order custom fields (adjust this to your setup)
-  function getDoorNumberFromOrder(): number | null {
-    try {
-      // @ts-ignore - vendor-specific custom fields
-      const cf = order?.customFields;
-      if (cf && cf.doorNumber) {
-        const n = Number(cf.doorNumber);
-        if (!isNaN(n)) return n;
-      }
-      // Try first line custom field as fallback
-      const firstLine = order.lines && order.lines.length ? order.lines[0] : null;
-      // @ts-ignore
-      if (firstLine?.customFields?.doorNumber) {
-        const n = Number(firstLine.customFields.doorNumber);
-        if (!isNaN(n)) return n;
-      }
-    } catch (e) {
-      // ignore and fallback
+  async function handleOpenDoor(door: number) {
+    if (!vendingServiceUrl) {
+      setUnlockResult('Vending service not configured');
+      return;
     }
-    return null;
-  }
 
-  const inferredDoor = getDoorNumberFromOrder();
-  const autoDoor = inferredDoor ?? (typeof doorNumber === 'number' ? doorNumber : null);
-
-  async function handleOpenDoor(doorNumber: number) {
     setUnlocking(true);
     setUnlockResult(null);
 
-    if (!vendingServiceUrl) {
-      setUnlockResult('Vending service not configured');
-      setUnlocking(false);
-      return;
-    }
     try {
-      const payload: Record<string, any> = {
-        orderId: order!.code,
-        door: doorNumber,
-      };
-      if (order?.customer?.email) payload.email = order.customer.email;
-
-      const resp = await fetch(`${vendingServiceUrl}/unlock`, {
+      const response = await fetch(`${vendingServiceUrl}/unlock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ door }),
       });
 
-      const data = await resp.json().catch(() => null);
-      if (!resp.ok) {
-        setUnlockResult(`Unlock failed: ${data?.error || resp.statusText}`);
+      if (response.ok) {
+        setUnlockResult(`Door #${door} unlocked successfully!`);
       } else {
-        setUnlockResult('Unlock requested. If the door does not open, check the machine.');
+        const error = await response.text();
+        setUnlockResult(`Failed to unlock door #${door}: ${error}`);
       }
-    } catch (err: any) {
-      setUnlockResult(`Network error: ${err?.message || String(err)}`);
+    } catch (error) {
+      setUnlockResult(`Error unlocking door #${door}: ${(error as Error).message}`);
     } finally {
       setUnlocking(false);
     }
   }
 
-  // Auto-trigger unlock once if we have a door number from session or order
-  useEffect(() => {
-    try {
-      if (!unlocking && !unlockResult && autoDoor) {
-        console.log('Auto-triggering door unlock for door:', autoDoor);
-        handleOpenDoor(autoDoor);
-      }
-    } catch (error) {
-      console.error('Error in auto-unlock useEffect:', error);
-      setUnlockResult('Error in auto-unlock: ' + (error as Error).message);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoDoor]);
-
-  try {
-    return (
-      <div className="p-8">
-        <h2 className="text-3xl flex items-center space-x-2 font-light tracking-tight text-gray-900 my-8">
-          <CheckCircleIcon className="text-green-600 w-8 h-8" />
-          <span>{t ? t('order.summary') : 'Order summary'}</span>
-        </h2>
+  return (
+    <div className="p-8">
+      <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
+        ✅ Order Confirmed
+      </h2>
 
       <p className="text-lg text-gray-700">
-        {t ? t('checkout.orderSuccessMessage') : 'Thank you — your order is confirmed.'}{' '}
-        <span className="font-bold">{order.code}</span>
+        Thank you — your order is confirmed. Order: <span className="font-bold">{order.code}</span>
       </p>
 
-      <div className="mt-6">
-        <div className="mb-6">
-          <CartContents orderLines={order.lines} currencyCode={order.currencyCode} editable={false} />
+      <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Order Details
+        </h3>
+        {order.lines?.map((line: any, index: number) => (
+          <div key={index} className="flex justify-between py-2">
+            <span>{line.productVariant?.name || 'Product'}</span>
+            <span>Qty: {line.quantity}</span>
+          </div>
+        ))}
+        <div className="border-t pt-2 mt-2">
+          <div className="flex justify-between font-bold">
+            <span>Total</span>
+            <span>
+              ${((order.totalWithTax || 0) / 100).toFixed(2)}
+            </span>
+          </div>
         </div>
-        <CartTotals order={order as OrderDetailFragment} />
       </div>
 
-      {order.active && (
-        <div className="rounded-md bg-blue-50 p-4 my-8">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <InformationCircleIcon className="h-5 w-5 text-blue-400" aria-hidden="true" />
-            </div>
-            <div className="ml-3 flex-1 md:flex md:justify-between">
-              <p className="text-sm text-blue-700">{t ? t('checkout.paymentMessage') : 'Your payment has been processed.'}</p>
-            </div>
+      {/* Door Unlock Section */}
+      <div className="mt-8 p-6 bg-blue-50 rounded-lg">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          🚪 Door Unlock
+        </h3>
+        
+        {doorNumber ? (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Door #{doorNumber} will be unlocked automatically.
+            </p>
+            <button
+              onClick={() => handleOpenDoor(doorNumber)}
+              disabled={unlocking}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {unlocking ? 'Opening...' : `Open door #${doorNumber}`}
+            </button>
+            {unlockResult && <div className="mt-3 text-sm text-gray-700">{unlockResult}</div>}
           </div>
-        </div>
-      )}
-
-      <div className="mt-6">
-        <h3 className="text-xl font-medium">Open the vending machine</h3>
-        <p className="text-sm text-gray-600 mb-3">
-          {autoDoor ? `Door ${autoDoor} is mapped to this order.` : 'No door is mapped. Enter a door number to open.'}
-        </p>
-
-        {!autoDoor && (
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700">Door number</label>
-            <input
-              type="number"
-              value={useManual ? (manualDoor === '' ? '' : String(manualDoor)) : ''}
-              onChange={(e) => setManualDoor(e.target.value ? Number(e.target.value) : '')}
-              className="mt-1 block w-40 rounded-md border-gray-300 shadow-sm"
-              placeholder="1"
-            />
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              No door number found in session. This might be a test order.
+            </p>
+            <p className="text-xs text-gray-500">
+              Door number: {doorNumber || 'Not set'}
+            </p>
           </div>
         )}
-
-        <div>
-          <button
-            onClick={() => handleOpenDoor(autoDoor ?? (manualDoor as number))}
-            disabled={unlocking}
-            className="px-4 py-2 rounded bg-blue-600 text-white"
-          >
-            {unlocking ? 'Opening...' : `Open door #${autoDoor ?? manualDoor}`}
-          </button>
-
-          {unlockResult && <div className="mt-3 text-sm text-gray-700">{unlockResult}</div>}
-        </div>
       </div>
     </div>
   );
-  } catch (error) {
-    console.error('Error rendering confirmation page:', error);
-    return (
-      <div className="p-8">
-        <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
-          Rendering Error
-        </h2>
-        <p className="text-gray-600">
-          There was an error rendering the confirmation page: {(error as Error).message}
-        </p>
-      </div>
-    );
-  }
 }
