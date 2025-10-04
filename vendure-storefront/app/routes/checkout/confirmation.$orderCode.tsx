@@ -133,7 +133,12 @@ export default function ConfirmationPage() {
     setUnlockResult(null);
 
     try {
-      const response = await fetch(`${vendingServiceUrl}/unlock`, {
+      // Ensure no double slashes in URL
+      const baseUrl = vendingServiceUrl.replace(/\/$/, '');
+      const unlockUrl = `${baseUrl}/unlock`;
+      console.log('Unlocking door via URL:', unlockUrl);
+      
+      const response = await fetch(unlockUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ door }),
