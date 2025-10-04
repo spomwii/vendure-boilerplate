@@ -277,7 +277,7 @@ export default function ConfirmationPage() {
               🚪 DOOR IS CLOSED
             </p>
             <p className="text-sm text-green-700 mt-2 text-center">
-              Press Open door # to unlock door. Make sure you are in front of this door when pressing Open door
+              Press "Open door" to unlock. Make sure you are in front of this door when pressing the button!
             </p>
           </div>
         )}
@@ -288,7 +288,7 @@ export default function ConfirmationPage() {
               Door status: {mqttConnected ? 'Monitoring...' : 'MQTT disconnected'}
             </p>
             <p className="text-sm text-yellow-700 mt-2 text-center">
-              Press Open door # to unlock door. Make sure you are in front of this door when pressing Open door
+              Press "Open door" to unlock. Make sure you are in front of this door when pressing the button!
             </p>
           </div>
         )}
