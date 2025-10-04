@@ -19,6 +19,12 @@ export function StripePayments({
   publishableKey: string;
   orderCode: string;
 }) {
+  console.log('StripePayments rendered with:', {
+    clientSecret: clientSecret ? 'Set' : 'Missing',
+    publishableKey: publishableKey ? 'Set' : 'Missing',
+    orderCode
+  });
+
   const options = {
     // passing the client secret obtained from the server
     clientSecret,

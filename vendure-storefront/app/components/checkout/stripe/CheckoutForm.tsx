@@ -51,10 +51,14 @@ export const CheckoutForm = ({ orderCode }: { orderCode: string }) => {
       <button
         disabled={!stripe}
         className="flex w-full px-6 bg-primary-600 hover:bg-primary-700 items-center justify-center space-x-2 py-3 my-4 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        onClick={() => console.log('Pay button clicked, stripe:', !!stripe)}
       >
         <CreditCardIcon className="w-5 h-5"></CreditCardIcon>
         <span>{t('checkout.payWith')} Stripe</span>
       </button>
+      <div className="mt-2 text-xs text-gray-500">
+        Stripe loaded: {stripe ? 'Yes' : 'No'} | Elements: {elements ? 'Yes' : 'No'}
+      </div>
     </form>
   );
 };

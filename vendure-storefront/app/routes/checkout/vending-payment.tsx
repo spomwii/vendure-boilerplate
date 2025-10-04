@@ -206,11 +206,21 @@ export default function VendingPayment() {
             </p>
             <p className="text-sm text-red-600">{stripeError}</p>
           </div>
+        ) : !stripePaymentIntent || !stripePublishableKey ? (
+          <div className="text-center">
+            <p className="text-red-700 font-bold mb-2">
+              Stripe Configuration Missing
+            </p>
+            <p className="text-sm text-red-600">
+              Payment intent: {stripePaymentIntent ? 'Set' : 'Missing'}<br/>
+              Publishable key: {stripePublishableKey ? 'Set' : 'Missing'}
+            </p>
+          </div>
         ) : (
           <StripePayments
             orderCode={activeOrder?.code ?? ''}
-            clientSecret={stripePaymentIntent!}
-            publishableKey={stripePublishableKey!}
+            clientSecret={stripePaymentIntent}
+            publishableKey={stripePublishableKey}
           />
         )}
       </div>
