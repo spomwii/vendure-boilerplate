@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { getOrderByCode } from '~/providers/orders/order';
 import { getSessionStorage } from '~/sessions';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { doorStatusMonitor, DoorStatus } from '~/utils/door-status';
+import { DoorStatus } from '~/utils/real-door-status';
 
 type LoaderData = {
   order: any | null;
@@ -102,23 +102,49 @@ export default function ConfirmationPage() {
   const [doorStatus, setDoorStatus] = useState<'closed' | 'open' | 'unknown'>('unknown');
   const [doorOpenTime, setDoorOpenTime] = useState<number | null>(null);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [mqttConnected, setMqttConnected] = useState(false);
   const autoDoor = doorNumber; // Use doorNumber from session for auto-unlock
 
-  // Handle door unlock success - NO MQTT monitoring to prevent ESP32 conflicts
+  // Real door status monitoring via server-side API
+  useEffect(() => {
+    if (!autoDoor) return;
+
+    const checkDoorStatus = async () => {
+      try {
+        const response = await fetch(`/api/door-status?door=${autoDoor}`);
+        const data = await response.json();
+        
+        console.log('Door status check:', data);
+        setMqttConnected(data.mqttConnected);
+        
+        if (data.status === 'open' && doorStatus !== 'open') {
+          console.log('🚪 Door opened - showing open message');
+          setDoorStatus('open');
+          setDoorOpenTime(Date.now());
+        } else if (data.status === 'closed' && doorStatus === 'open') {
+          console.log('🚪 Door closed - showing thank you message');
+          setDoorStatus('closed');
+          setShowThankYou(true);
+        }
+      } catch (error) {
+        console.error('Error checking door status:', error);
+      }
+    };
+
+    // Check door status every 2 seconds
+    const interval = setInterval(checkDoorStatus, 2000);
+    
+    // Initial check
+    checkDoorStatus();
+
+    return () => clearInterval(interval);
+  }, [autoDoor, doorStatus]);
+
+  // Handle door unlock success
   useEffect(() => {
     if (unlockResult && unlockResult.includes('unlocked successfully')) {
-      console.log('Door unlock successful - simulating door status');
-      setDoorStatus('open');
-      setDoorOpenTime(Date.now());
-      
-      // Simulate door closing after 5 seconds (for testing)
-      setTimeout(() => {
-        console.log('Simulating door close');
-        setDoorStatus('closed');
-        setShowThankYou(true);
-        // Don't redirect - stay on thank you page
-        console.log('Thank you message shown - staying on page');
-      }, 5000);
+      console.log('Door unlock command sent - waiting for real door status');
+      // Don't simulate - wait for real MQTT status
     }
   }, [unlockResult]);
 
@@ -168,17 +194,9 @@ export default function ConfirmationPage() {
       const result = await response.json();
 
       if (result.success) {
-        setUnlockResult(`Door #${door} unlocked successfully!`);
-        setDoorStatus('open');
-        setDoorOpenTime(Date.now());
-        
-        // Simulate door closing after 5 seconds
-        setTimeout(() => {
-          setDoorStatus('closed');
-        }, 5000);
-        
-        // Don't clear cart or redirect - let user stay on thank you page
-        console.log('Door unlock successful - user can stay on thank you page');
+        setUnlockResult(`Door #${door} unlock command sent!`);
+        // Don't set door status here - wait for real MQTT status
+        console.log('Door unlock command sent - waiting for real door status from MQTT');
       } else {
         setUnlockResult(`Failed to unlock door #${door}: ${result.error}`);
       }
@@ -247,6 +265,9 @@ export default function ConfirmationPage() {
             <p className="text-red-800 font-bold text-center animate-pulse">
               🚪 DOOR IS OPEN
             </p>
+            <p className="text-sm text-red-700 mt-2 text-center">
+              Please take your product and close door when finished. Thank you!
+            </p>
           </div>
         )}
         
@@ -258,9 +279,19 @@ export default function ConfirmationPage() {
           </div>
         )}
         
-        <p className="text-sm text-blue-700 mb-3">
-          Please take your product and close door when finished. Thank you!
-        </p>
+        {doorStatus === 'unknown' && (
+          <div className="mb-3 p-3 bg-yellow-100 border border-yellow-300 rounded-md">
+            <p className="text-yellow-800 text-center">
+              Door status: {mqttConnected ? 'Monitoring...' : 'MQTT disconnected'}
+            </p>
+          </div>
+        )}
+        
+        {doorStatus !== 'open' && (
+          <p className="text-sm text-blue-700 mb-3">
+            Please take your product and close door when finished. Thank you!
+          </p>
+        )}
         
         <button
           onClick={() => handleOpenDoor(autoDoor ?? 1)}
