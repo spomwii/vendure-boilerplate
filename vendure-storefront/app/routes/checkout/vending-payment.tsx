@@ -219,31 +219,12 @@ export default function VendingPayment() {
           </div>
         ) : (
           <div>
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-sm text-yellow-800">
-                <strong>Development Mode:</strong> Using test payment form (Stripe disabled for testing)
-              </p>
-            </div>
-            
-            {/* Test Payment Form */}
-            <SimpleCheckoutForm
+            {/* Stripe Payment */}
+            <StripePayments
+              clientSecret={stripePaymentIntent}
+              publishableKey={stripePublishableKey}
               orderCode={activeOrder?.code ?? ''}
-              onPaymentSuccess={(orderCode) => {
-                window.location.href = `/checkout/confirmation/${orderCode}`;
-              }}
             />
-            
-            {/* Stripe Payment (Hidden for now) */}
-            {false && (
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Stripe Payment</h4>
-                <StripePayments
-                  clientSecret={stripePaymentIntent}
-                  publishableKey={stripePublishableKey}
-                  orderCode={activeOrder?.code ?? ''}
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
