@@ -4,6 +4,7 @@ import {
     DefaultSearchPlugin,
     VendureConfig,
 } from '@vendure/core';
+import { stripePaymentHandler } from '@vendure/payments-plugin/package/stripe';
 import { defaultEmailHandlers, EmailPlugin, EmailPluginDevModeOptions, EmailPluginOptions } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
@@ -81,7 +82,7 @@ export const config: VendureConfig = {
         password: process.env.DB_PASSWORD,
     },
     paymentOptions: {
-        paymentMethodHandlers: [dummyPaymentHandler],
+        paymentMethodHandlers: [dummyPaymentHandler, stripePaymentHandler],
     },
     // When adding or altering custom field definitions, the database will
     // need to be updated. See the "Migrations" section in README.md.
@@ -97,6 +98,8 @@ export const config: VendureConfig = {
         }),
         StripePlugin.init({
             storeCustomersInStripe: true,
+            apiKey: process.env.STRIPE_SECRET_KEY,
+            webhookSigningSecret: process.env.STRIPE_WEBHOOK_SECRET,
             paymentIntentCreateParams: (injector, ctx, order) => {
                 return {
                     description: `Order #${order.code} for ${order.customer?.emailAddress}`
