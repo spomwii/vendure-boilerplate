@@ -136,12 +136,17 @@ export default function ConfirmationPage() {
       // Ensure no double slashes in URL
       const baseUrl = vendingServiceUrl.replace(/\/$/, '');
       const unlockUrl = `${baseUrl}/unlock`;
+      const unlockData = { 
+        orderId: order.id,
+        door: door 
+      };
       console.log('Unlocking door via URL:', unlockUrl);
+      console.log('Unlock data:', unlockData);
       
       const response = await fetch(unlockUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ door }),
+        body: JSON.stringify(unlockData),
       });
 
       if (response.ok) {
