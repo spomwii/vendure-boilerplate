@@ -79,7 +79,7 @@ export default function VendingCheckout() {
   };
 
   function navigateToPayment() {
-    navigate('./vending-payment');
+    navigate('/checkout/vending-payment');
   }
 
   return (
