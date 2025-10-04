@@ -7,6 +7,7 @@ import { getOrderByCode } from '~/providers/orders/order';
 import { getSessionStorage } from '~/sessions';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { doorStatusMonitor, DoorStatus } from '~/utils/door-status';
+import { directMQTTUnlock } from '~/utils/direct-mqtt-unlock';
 
 type LoaderData = {
   order: any | null;
@@ -149,32 +150,16 @@ export default function ConfirmationPage() {
   }
 
   async function handleOpenDoor(door: number) {
-    if (!vendingServiceUrl) {
-      setUnlockResult('Vending service not configured');
-      return;
-    }
-
     setUnlocking(true);
     setUnlockResult(null);
 
     try {
-      // Ensure no double slashes in URL
-      const baseUrl = vendingServiceUrl.replace(/\/$/, '');
-      const unlockUrl = `${baseUrl}/unlock`;
-      const unlockData = { 
-        orderId: order.id,
-        door: door 
-      };
-      console.log('Unlocking door via URL:', unlockUrl);
-      console.log('Unlock data:', unlockData);
+      console.log('Unlocking door via direct MQTT:', door, order.id);
       
-      const response = await fetch(unlockUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(unlockData),
-      });
-
-      if (response.ok) {
+      // Use direct MQTT unlock instead of vending service
+      const result = await directMQTTUnlock.unlockDoor(door, order.id);
+      
+      if (result.success) {
         setUnlockResult(`Door #${door} unlocked successfully!`);
         setDoorStatus('open');
         setDoorOpenTime(Date.now());
@@ -187,8 +172,7 @@ export default function ConfirmationPage() {
         // Don't clear cart or redirect - let user stay on thank you page
         console.log('Door unlock successful - user can stay on thank you page');
       } else {
-        const error = await response.text();
-        setUnlockResult(`Failed to unlock door #${door}: ${error}`);
+        setUnlockResult(`Failed to unlock door #${door}: ${result.error || result.message}`);
       }
     } catch (error) {
       setUnlockResult(`Error unlocking door #${door}: ${(error as Error).message}`);
