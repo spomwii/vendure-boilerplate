@@ -45,8 +45,25 @@ export default function VendingCheckout() {
   let navigate = useNavigate();
   const { t } = useTranslation();
 
+  // Add error boundary to prevent crashes
+  if (!activeOrder) {
+    return (
+      <div className="max-w-md mx-auto text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">No Active Order</h2>
+        <p className="text-gray-600 mb-4">Please scan a QR code to add a product to your cart.</p>
+        <button
+          onClick={() => navigate('/scan')}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+        >
+          Scan QR Code
+        </button>
+      </div>
+    );
+  }
+
   const { customer } = activeOrder ?? {};
-  const canProceedToPayment = customer && activeOrder?.lines?.length;
+  // For vending machine, we don't require a customer - just need items in cart
+  const canProceedToPayment = activeOrder?.lines?.length > 0;
 
   const submitEmailForm = (event: FormEvent<HTMLFormElement>) => {
     const formData = new FormData(event.currentTarget);
@@ -89,7 +106,9 @@ export default function VendingCheckout() {
               {new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: activeOrder.currencyCode,
-              }).format(line.linePriceWithTax)}
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(line.linePriceWithTax / 100)}
             </p>
           </div>
         ))}
@@ -100,7 +119,9 @@ export default function VendingCheckout() {
               {new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: activeOrder?.currencyCode,
-              }).format(activeOrder?.totalWithTax || 0)}
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format((activeOrder?.totalWithTax || 0) / 100)}
             </span>
           </div>
         </div>

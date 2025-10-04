@@ -155,7 +155,9 @@ export default function VendingPayment() {
               {new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: activeOrder.currencyCode,
-              }).format(line.linePriceWithTax)}
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(line.linePriceWithTax / 100)}
             </p>
           </div>
         ))}
@@ -166,7 +168,9 @@ export default function VendingPayment() {
               {new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: activeOrder?.currencyCode,
-              }).format(activeOrder?.totalWithTax || 0)}
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format((activeOrder?.totalWithTax || 0) / 100)}
             </span>
           </div>
         </div>
