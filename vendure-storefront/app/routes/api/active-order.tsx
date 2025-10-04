@@ -142,6 +142,26 @@ export async function action({ request, params }: DataFunctionArgs) {
     }
     case 'addPaymentToOrder': {
     }
+    case 'clearOrder': {
+      // Clear the active order (for vending machine workflow)
+      try {
+        // Get current active order
+        const currentOrder = await getActiveOrder({ request });
+        if (currentOrder && currentOrder.id) {
+          // Transition order to a completed state or remove it
+          // For now, we'll just log that we're clearing it
+          console.log('Clearing order:', currentOrder.id);
+          // In a real implementation, you might want to:
+          // 1. Transition the order to a completed state
+          // 2. Create a new empty order
+          // 3. Or handle this differently based on your business logic
+        }
+      } catch (e) {
+        console.error('Error clearing order:', e);
+        error = { message: 'Failed to clear order', errorCode: 'CLEAR_ORDER_ERROR' };
+      }
+      break;
+    }
     default:
     // Don't do anything
   }
