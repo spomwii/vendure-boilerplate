@@ -73,15 +73,21 @@ export async function action({ params, request }: DataFunctionArgs) {
   const paymentMethodCode = body.get('paymentMethodCode');
   const paymentNonce = body.get('paymentNonce');
   
+  console.log('Payment action called with method:', paymentMethodCode);
+  
   if (typeof paymentMethodCode === 'string') {
     const { nextOrderStates } = await getNextOrderStates({
       request,
     });
+    console.log('Next order states:', nextOrderStates);
+    
     if (nextOrderStates.includes('ArrangingPayment')) {
+      console.log('Transitioning to ArrangingPayment state');
       const transitionResult = await transitionOrderToState(
         'ArrangingPayment',
         { request },
       );
+      console.log('Transition result:', transitionResult.transitionOrderToState?.__typename);
       if (transitionResult.transitionOrderToState?.__typename !== 'Order') {
         throw new Response('Not Found', {
           status: 400,
@@ -90,15 +96,20 @@ export async function action({ params, request }: DataFunctionArgs) {
       }
     }
 
+    console.log('Adding payment to order...');
     const result = await addPaymentToOrder(
       { method: paymentMethodCode, metadata: { nonce: paymentNonce } },
       { request },
     );
+    console.log('Payment result:', result.addPaymentToOrder?.__typename);
+    console.log('Order code:', result.addPaymentToOrder?.code);
+    
     if (result.addPaymentToOrder.__typename === 'Order') {
       return redirect(
         `/checkout/confirmation/${result.addPaymentToOrder.code}`,
       );
     } else {
+      console.error('Payment failed:', result.addPaymentToOrder?.message);
       throw new Response('Not Found', {
         status: 400,
         statusText: result.addPaymentToOrder?.message,

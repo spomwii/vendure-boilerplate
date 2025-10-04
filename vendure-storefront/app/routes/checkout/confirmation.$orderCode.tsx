@@ -19,7 +19,15 @@ type LoaderData = {
 
 export async function loader({ params, request }: DataFunctionArgs) {
   try {
+    console.log('Looking for order with code:', params.orderCode);
     const order = await getOrderByCode(params.orderCode!, { request });
+    console.log('Order found:', order ? 'Yes' : 'No');
+    
+    if (!order) {
+      console.log('Order not found for code:', params.orderCode);
+      return json<LoaderData>({ order: null, vendingServiceUrl: '', error: true });
+    }
+    
     const vendingServiceUrl = process.env.VENDING_SERVICE_URL || '';
     // Read and consume doorNumber from session for one-time auto-unlock attempt
     const sessionStorage = await getSessionStorage();
@@ -27,6 +35,8 @@ export async function loader({ params, request }: DataFunctionArgs) {
       request?.headers.get('Cookie'),
     );
     const doorNumber = session.get('doorNumber') as number | undefined;
+    console.log('Door number from session:', doorNumber);
+    
     // Do not clear yet; the client will perform unlock then we clear via header
     const headers: Record<string, string> = {};
     if (doorNumber !== undefined) {
@@ -35,6 +45,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
     }
     return json<LoaderData & { doorNumber?: number }>({ order, vendingServiceUrl, error: false, doorNumber }, { headers });
   } catch (ex) {
+    console.error('Error in confirmation loader:', ex);
     return json<LoaderData>({ order: null, vendingServiceUrl: '', error: true });
   }
 }
