@@ -154,12 +154,19 @@ export default function ConfirmationPage() {
         
         // Clear the session to reset the cart for next purchase
         try {
-          await fetch('/api/active-order', {
+          const clearResponse = await fetch('/api/active-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'action=clearOrder'
           });
-          console.log('Cart cleared after successful door unlock');
+          
+          if (clearResponse.ok) {
+            console.log('Cart cleared after successful door unlock');
+            // Force page reload to clear any cached cart state
+            window.location.reload();
+          } else {
+            console.log('Failed to clear cart - response not ok');
+          }
         } catch (e) {
           console.log('Failed to clear cart:', e);
         }

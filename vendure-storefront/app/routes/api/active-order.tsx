@@ -148,13 +148,22 @@ export async function action({ request, params }: DataFunctionArgs) {
         // Get current active order
         const currentOrder = await getActiveOrder({ request });
         if (currentOrder && currentOrder.id) {
-          // Transition order to a completed state or remove it
-          // For now, we'll just log that we're clearing it
           console.log('Clearing order:', currentOrder.id);
-          // In a real implementation, you might want to:
-          // 1. Transition the order to a completed state
-          // 2. Create a new empty order
-          // 3. Or handle this differently based on your business logic
+          
+          // Clear the session to reset the cart
+          const sessionStorage = await getSessionStorage();
+          const session = await sessionStorage.getSession(
+            request?.headers.get('Cookie'),
+          );
+          
+          // Clear all session data to force a fresh start
+          session.unset('activeOrderError');
+          session.unset('doorNumber');
+          
+          console.log('Session cleared successfully');
+          
+          // Return empty active order
+          activeOrder = null;
         }
       } catch (e) {
         console.error('Error clearing order:', e);
@@ -170,12 +179,21 @@ export async function action({ request, params }: DataFunctionArgs) {
   const session = await sessionStorage.getSession(
     request?.headers.get('Cookie'),
   );
-  session.flash('activeOrderError', error);
+  
+  // Only flash error if not clearing order
+  if (action !== 'clearOrder') {
+    session.flash('activeOrderError', error);
+  }
+  
   headers = {
     'Set-Cookie': await sessionStorage.commitSession(session),
   };
+  
+  // For clearOrder, return null activeOrder, otherwise get current active order
+  const finalActiveOrder = action === 'clearOrder' ? null : (activeOrder || (await getActiveOrder({ request })));
+  
   return json(
-    { activeOrder: activeOrder || (await getActiveOrder({ request })) },
+    { activeOrder: finalActiveOrder },
     {
       headers,
     },
