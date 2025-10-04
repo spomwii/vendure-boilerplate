@@ -10,6 +10,7 @@ import { useLoaderData, useOutletContext } from '@remix-run/react';
 import { OutletContext } from '~/types';
 import { CurrencyCode, ErrorCode, ErrorResult } from '~/generated/graphql';
 import { StripePayments } from '~/components/checkout/stripe/StripePayments';
+import { SimpleCheckoutForm } from '~/components/checkout/stripe/SimpleCheckoutForm';
 import { getActiveOrder } from '~/providers/orders/order';
 import { getSessionStorage } from '~/sessions';
 import { useTranslation } from 'react-i18next';
@@ -217,11 +218,14 @@ export default function VendingPayment() {
             </p>
           </div>
         ) : (
-          <StripePayments
-            orderCode={activeOrder?.code ?? ''}
-            clientSecret={stripePaymentIntent}
-            publishableKey={stripePublishableKey}
-          />
+          <div>
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Debug Mode:</strong> Using simple test form instead of Stripe
+              </p>
+            </div>
+            <SimpleCheckoutForm orderCode={activeOrder?.code ?? ''} />
+          </div>
         )}
       </div>
 
