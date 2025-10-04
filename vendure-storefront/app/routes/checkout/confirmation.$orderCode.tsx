@@ -194,7 +194,7 @@ export default function ConfirmationPage() {
       const result = await response.json();
 
       if (result.success) {
-        setUnlockResult(`Door #${door} unlock command sent!`);
+        setUnlockResult(null); // Don't show debug message
         // Don't set door status here - wait for real MQTT status
         console.log('Door unlock command sent - waiting for real door status from MQTT');
       } else {
@@ -276,6 +276,9 @@ export default function ConfirmationPage() {
             <p className="text-green-800 font-bold text-center">
               🚪 DOOR IS CLOSED
             </p>
+            <p className="text-sm text-green-700 mt-2 text-center">
+              Press Open door # to unlock door. Make sure you are in front of this door when pressing Open door
+            </p>
           </div>
         )}
         
@@ -284,13 +287,10 @@ export default function ConfirmationPage() {
             <p className="text-yellow-800 text-center">
               Door status: {mqttConnected ? 'Monitoring...' : 'MQTT disconnected'}
             </p>
+            <p className="text-sm text-yellow-700 mt-2 text-center">
+              Press Open door # to unlock door. Make sure you are in front of this door when pressing Open door
+            </p>
           </div>
-        )}
-        
-        {doorStatus !== 'open' && (
-          <p className="text-sm text-blue-700 mb-3">
-            Please take your product and close door when finished. Thank you!
-          </p>
         )}
         
         <button
