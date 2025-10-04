@@ -164,6 +164,16 @@ export async function action({ request, params }: DataFunctionArgs) {
           
           // Return empty active order
           activeOrder = null;
+          
+          // Set a success flag in the response
+          return json(
+            { activeOrder: null, cleared: true },
+            {
+              headers: {
+                'Set-Cookie': await sessionStorage.commitSession(session),
+              },
+            },
+          );
         }
       } catch (e) {
         console.error('Error clearing order:', e);

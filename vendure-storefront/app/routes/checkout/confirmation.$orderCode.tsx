@@ -162,8 +162,8 @@ export default function ConfirmationPage() {
           
           if (clearResponse.ok) {
             console.log('Cart cleared after successful door unlock');
-            // Force page reload to clear any cached cart state
-            window.location.reload();
+            // Force complete page reload to clear any cached cart state
+            window.location.href = '/';
           } else {
             console.log('Failed to clear cart - response not ok');
           }
