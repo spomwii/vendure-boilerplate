@@ -54,6 +54,9 @@ export async function loader({ params, request }: DataFunctionArgs) {
       session.unset('activeOrderError');
       session.unset('doorNumber');
       
+      // Also clear any active order to prevent conflicts
+      session.unset('activeOrder');
+      
       const headers: Record<string, string> = {
         'Set-Cookie': await sessionStorage.commitSession(session)
       };
@@ -82,10 +85,16 @@ export async function loader({ params, request }: DataFunctionArgs) {
     const doorNumber = session.get('doorNumber') as number | undefined;
     console.log('Door number from session:', doorNumber);
     
-    // Do not clear yet; the client will perform unlock then we clear via header
+    // Clear session data to prevent conflicts with subsequent orders
+    session.unset('activeOrderError');
+    session.unset('activeOrder');
+    
     const headers: Record<string, string> = {};
     if (doorNumber !== undefined) {
       session.unset('doorNumber');
+      headers['Set-Cookie'] = await sessionStorage.commitSession(session);
+    } else {
+      // Still commit session even if no door number
       headers['Set-Cookie'] = await sessionStorage.commitSession(session);
     }
     return json<LoaderData>({ order, vendingServiceUrl, error: false, doorNumber }, { headers });

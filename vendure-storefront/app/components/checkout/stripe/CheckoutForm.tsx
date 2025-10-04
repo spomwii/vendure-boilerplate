@@ -34,6 +34,9 @@ export const CheckoutForm = ({ orderCode }: { orderCode: string }) => {
 
     try {
       console.log('Confirming payment...');
+      console.log('Order code:', orderCode);
+      console.log('Return URL:', location.origin + `/checkout/confirmation/${orderCode}`);
+      
       const result = await stripe.confirmPayment({
         //`Elements` instance that was used to create the Payment Element
         elements,
@@ -42,9 +45,13 @@ export const CheckoutForm = ({ orderCode }: { orderCode: string }) => {
         },
       });
 
+      console.log('Stripe confirmPayment result:', result);
+
       if (result.error) {
         // Show error to your customer (for example, payment details incomplete)
-        console.error('Payment error:', result.error.message);
+        console.error('Payment error:', result.error);
+        console.error('Error code:', result.error.code);
+        console.error('Error type:', result.error.type);
         setError(result.error.message || 'Payment failed. Please try again.');
       } else {
         console.log('Payment successful, redirecting...');
@@ -54,6 +61,7 @@ export const CheckoutForm = ({ orderCode }: { orderCode: string }) => {
       }
     } catch (err) {
       console.error('Payment exception:', err);
+      console.error('Exception details:', err);
       setError('Payment failed. Please try again.');
     } finally {
       setIsLoading(false);
