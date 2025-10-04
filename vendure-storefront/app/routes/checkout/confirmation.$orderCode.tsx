@@ -152,9 +152,21 @@ export default function ConfirmationPage() {
       if (response.ok) {
         setUnlockResult(`Door #${door} unlocked successfully!`);
         
-        // For vending machine workflow, redirect to scan page after successful unlock
+        // Clear the session to reset the cart for next purchase
+        try {
+          await fetch('/api/active-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=clearOrder'
+          });
+          console.log('Cart cleared after successful door unlock');
+        } catch (e) {
+          console.log('Failed to clear cart:', e);
+        }
+        
+        // For vending machine workflow, redirect to home page after successful unlock
         setTimeout(() => {
-          window.location.href = '/scan';
+          window.location.href = '/';
         }, 3000); // Wait 3 seconds to show success message
       } else {
         const error = await response.text();
