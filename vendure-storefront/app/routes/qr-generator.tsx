@@ -1,9 +1,10 @@
 // QR Code Generator for Vending Machine Doors
-import { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 
 export default function QRGenerator() {
   const [selectedDoor, setSelectedDoor] = useState(1);
+  const [qrDataUrls, setQrDataUrls] = useState<Record<number, string>>({});
   
   const doors = Array.from({ length: 8 }, (_, i) => i + 1);
   const baseUrl = process.env.NODE_ENV === 'production' 
@@ -15,29 +16,34 @@ export default function QRGenerator() {
     return doorUrl;
   };
 
-  const downloadQRCode = (doorNumber: number) => {
-    const svg = document.getElementById(`qr-${doorNumber}`)?.querySelector('svg');
-    if (svg) {
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-        
-        const pngFile = canvas.toDataURL('image/png');
-        const downloadLink = document.createElement('a');
-        downloadLink.download = `door-${doorNumber}-qr.png`;
-        downloadLink.href = pngFile;
-        downloadLink.click();
-      };
-      
-      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+  const generateQRDataUrl = async (doorNumber: number) => {
+    try {
+      const url = generateQRCode(doorNumber);
+      const dataUrl = await QRCode.toDataURL(url, { width: 256 });
+      setQrDataUrls(prev => ({ ...prev, [doorNumber]: dataUrl }));
+      return dataUrl;
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      return '';
     }
   };
+
+  const downloadQRCode = (doorNumber: number) => {
+    const dataUrl = qrDataUrls[doorNumber];
+    if (dataUrl) {
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `door-${doorNumber}-qr.png`;
+      downloadLink.href = dataUrl;
+      downloadLink.click();
+    }
+  };
+
+  // Generate QR codes for all doors on component mount
+  useEffect(() => {
+    doors.forEach(door => {
+      generateQRDataUrl(door);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -85,12 +91,17 @@ export default function QRGenerator() {
           
           <div className="flex flex-col items-center">
             <div id={`qr-${selectedDoor}`} className="p-4 bg-white border-2 border-gray-200 rounded-lg">
-              <QRCodeSVG
-                value={generateQRCode(selectedDoor)}
-                size={256}
-                level="M"
-                includeMargin={true}
-              />
+              {qrDataUrls[selectedDoor] ? (
+                <img 
+                  src={qrDataUrls[selectedDoor]} 
+                  alt={`QR Code for Door ${selectedDoor}`}
+                  className="w-64 h-64"
+                />
+              ) : (
+                <div className="w-64 h-64 flex items-center justify-center text-gray-500">
+                  Generating QR Code...
+                </div>
+              )}
             </div>
             
             <div className="mt-4 text-center">
@@ -110,12 +121,17 @@ export default function QRGenerator() {
               <div key={door} className="bg-white rounded-lg shadow p-4 text-center">
                 <h3 className="font-medium mb-2">Door {door}</h3>
                 <div className="mb-2">
-                  <QRCodeSVG
-                    value={generateQRCode(door)}
-                    size={128}
-                    level="M"
-                    includeMargin={true}
-                  />
+                  {qrDataUrls[door] ? (
+                    <img 
+                      src={qrDataUrls[door]} 
+                      alt={`QR Code for Door ${door}`}
+                      className="w-32 h-32 mx-auto"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 flex items-center justify-center text-gray-500 text-xs">
+                      Generating...
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => downloadQRCode(door)}
