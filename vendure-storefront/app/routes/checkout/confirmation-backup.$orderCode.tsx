@@ -1,4 +1,4 @@
-// app/routes/checkout/confirmation-improved.$orderCode.tsx
+// app/routes/checkout/confirmation.$orderCode.tsx
 import type { DataFunctionArgs } from '@remix-run/server-runtime';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { getOrderByCode } from '~/providers/orders/order';
 import { getSessionStorage } from '~/sessions';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { doorStatusMonitor, DoorStatus } from '~/utils/door-status';
 
 type LoaderData = {
   order: any | null;
@@ -82,7 +81,6 @@ export async function loader({ params, request }: DataFunctionArgs) {
     const doorNumber = session.get('doorNumber') as number | undefined;
     console.log('Door number from session:', doorNumber);
     
-    // Do not clear yet; the client will perform unlock then we clear via header
     const headers: Record<string, string> = {};
     if (doorNumber !== undefined) {
       session.unset('doorNumber');
@@ -99,38 +97,8 @@ export default function ConfirmationPage() {
   const { order, vendingServiceUrl, doorNumber, error } = useLoaderData<LoaderData>();
   const [unlocking, setUnlocking] = useState(false);
   const [unlockResult, setUnlockResult] = useState<string | null>(null);
-  const [doorStatus, setDoorStatus] = useState<'closed' | 'open' | 'unknown'>('unknown');
-  const [doorOpenTime, setDoorOpenTime] = useState<number | null>(null);
-  const autoDoor = doorNumber; // Use doorNumber from session for auto-unlock
 
-  // Monitor door status via MQTT
-  useEffect(() => {
-    if (!autoDoor) return;
-
-    const unsubscribe = doorStatusMonitor.subscribe((door, status) => {
-      if (door === autoDoor) {
-        setDoorStatus(status.status);
-        if (status.status === 'open') {
-          setDoorOpenTime(status.timestamp);
-        }
-      }
-    });
-
-    // Also simulate door opening after unlock for immediate feedback
-    if (unlockResult && unlockResult.includes('unlocked successfully')) {
-      setDoorStatus('open');
-      setDoorOpenTime(Date.now());
-      
-      // Simulate door closing after 5 seconds if MQTT doesn't provide real status
-      setTimeout(() => {
-        if (doorStatus === 'open') {
-          setDoorStatus('closed');
-        }
-      }, 5000);
-    }
-
-    return unsubscribe;
-  }, [unlockResult, autoDoor, doorStatus]);
+  console.log('ConfirmationPage rendered with:', { order: !!order, error, doorNumber });
 
   if (error) {
     return (
@@ -186,13 +154,6 @@ export default function ConfirmationPage() {
 
       if (response.ok) {
         setUnlockResult(`Door #${door} unlocked successfully!`);
-        setDoorStatus('open');
-        setDoorOpenTime(Date.now());
-        
-        // Simulate door closing after 5 seconds
-        setTimeout(() => {
-          setDoorStatus('closed');
-        }, 5000);
         
         // Clear the session to reset the cart for next purchase
         try {
@@ -204,6 +165,8 @@ export default function ConfirmationPage() {
           
           if (clearResponse.ok) {
             console.log('Cart cleared after successful door unlock');
+            // Force complete page reload to clear any cached cart state
+            window.location.href = '/';
           } else {
             console.log('Failed to clear cart - response not ok');
           }
@@ -214,7 +177,7 @@ export default function ConfirmationPage() {
         // For vending machine workflow, redirect to home page after successful unlock
         setTimeout(() => {
           window.location.href = '/';
-        }, 8000); // Wait 8 seconds to show success message and allow door to close
+        }, 3000); // Wait 3 seconds to show success message
       } else {
         const error = await response.text();
         setUnlockResult(`Failed to unlock door #${door}: ${error}`);
@@ -227,89 +190,65 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="p-8 max-w-md mx-auto">
-      <h2 className="text-3xl flex items-center space-x-2 font-light tracking-tight text-gray-900 my-8">
-        <CheckCircleIcon className="text-green-600 w-8 h-8" />
-        <span>Order Confirmed</span>
+    <div className="p-8">
+      <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
+        ✅ Order Confirmed
       </h2>
 
-      <p className="text-lg text-gray-700 mb-4">
+      <p className="text-lg text-gray-700">
         Thank you — your order is confirmed. Order: <span className="font-bold">{order.code}</span>
       </p>
 
-      {/* Receipt */}
-      <div className="bg-white border-2 border-gray-200 rounded-lg p-4 mb-6">
-        <h3 className="font-bold text-gray-900 mb-3 text-center">RECEIPT</h3>
-        <div className="space-y-2">
-          {order.lines?.map((line: any, index: number) => (
-            <div key={index} className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium">{line.productVariant.name}</p>
-                <p className="text-xs text-gray-600">Qty: {line.quantity}</p>
-              </div>
-              <p className="text-sm font-medium">
-                {new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: order.currencyCode,
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(line.linePriceWithTax / 100)}
-              </p>
-            </div>
-          ))}
-          <div className="border-t pt-2 mt-2 flex justify-between items-center font-bold">
-            <span>TOTAL</span>
+      <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Order Details
+        </h3>
+        {order.lines?.map((line: any, index: number) => (
+          <div key={index} className="flex justify-between py-2">
+            <span>{line.productVariant?.name || 'Product'}</span>
+            <span>Qty: {line.quantity}</span>
+          </div>
+        ))}
+        <div className="border-t pt-2 mt-2">
+          <div className="flex justify-between font-bold">
+            <span>Total</span>
             <span>
-              {new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: order.currencyCode,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }).format((order.totalWithTax || 0) / 100)}
+              ${((order.totalWithTax || 0) / 100).toFixed(2)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Door Status */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h3 className="font-medium text-blue-800 mb-2 flex items-center space-x-2">
-          <span role="img" aria-label="door">🚪</span>
-          <span>Door #{autoDoor}</span>
+      {/* Door Unlock Section */}
+      <div className="mt-8 p-6 bg-blue-50 rounded-lg">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          🚪 Door Unlock
         </h3>
         
-        {/* Door Status Indicator */}
-        {doorStatus === 'open' && (
-          <div className="mb-3 p-3 bg-red-100 border border-red-300 rounded-md">
-            <p className="text-red-800 font-bold text-center animate-pulse">
-              🚪 DOOR IS OPEN
+        {doorNumber ? (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Door #{doorNumber} will be unlocked automatically.
+            </p>
+            <button
+              onClick={() => handleOpenDoor(doorNumber)}
+              disabled={unlocking}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {unlocking ? 'Opening...' : `Open door #${doorNumber}`}
+            </button>
+            {unlockResult && <div className="mt-3 text-sm text-gray-700">{unlockResult}</div>}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              No door number found in session. This might be a test order.
+            </p>
+            <p className="text-xs text-gray-500">
+              Door number: {doorNumber || 'Not set'}
             </p>
           </div>
         )}
-        
-        {doorStatus === 'closed' && (
-          <div className="mb-3 p-3 bg-green-100 border border-green-300 rounded-md">
-            <p className="text-green-800 font-bold text-center">
-              🚪 DOOR IS CLOSED
-            </p>
-          </div>
-        )}
-        
-        <p className="text-sm text-blue-700 mb-3">
-          Please take your product and close door when finished. Thank you!
-        </p>
-        
-        <button
-          onClick={() => handleOpenDoor(autoDoor ?? 1)}
-          disabled={unlocking}
-          className={`w-full flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
-            unlocking ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-          } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-        >
-          {unlocking ? 'Opening...' : `Open door #${autoDoor ?? 1}`}
-        </button>
-
-        {unlockResult && <div className="mt-3 text-sm text-gray-700">{unlockResult}</div>}
       </div>
     </div>
   );

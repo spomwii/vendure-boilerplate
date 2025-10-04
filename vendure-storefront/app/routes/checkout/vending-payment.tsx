@@ -219,17 +219,11 @@ export default function VendingPayment() {
           </div>
         ) : (
           <div>
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-sm text-blue-800">
-                <strong>Debug Mode:</strong> Using simple test form instead of Stripe
-              </p>
-            </div>
-            <SimpleCheckoutForm 
-              orderCode={activeOrder?.code ?? ''} 
-              onPaymentSuccess={(orderCode) => {
-                window.location.href = `/checkout/confirmation/${orderCode}`;
-              }}
-            />
+                <StripePayments
+                  clientSecret={stripePaymentIntent}
+                  publishableKey={stripePublishableKey}
+                  orderCode={activeOrder?.code ?? ''}
+                />
           </div>
         )}
       </div>
