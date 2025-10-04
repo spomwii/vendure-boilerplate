@@ -33,12 +33,13 @@ export async function loader({ request }: DataFunctionArgs) {
   const error = session.get('activeOrderError');
   return json({
     error,
+    activeOrder,
   });
 }
 
 export default function VendingCheckout() {
-  const { error } = useLoaderData<typeof loader>();
-  const { activeOrderFetcher, activeOrder } = useOutletContext<OutletContext>();
+  const { error, activeOrder } = useLoaderData<typeof loader>();
+  const { activeOrderFetcher } = useOutletContext<OutletContext>();
   const [emailFormChanged, setEmailFormChanged] = useState(false);
   const [email, setEmail] = useState('');
   let navigate = useNavigate();
