@@ -12,6 +12,10 @@ export const CheckoutForm = ({ orderCode }: { orderCode: string }) => {
   const elements = useElements();
   const { t } = useTranslation();
 
+  console.log('CheckoutForm rendered with orderCode:', orderCode);
+  console.log('Stripe loaded:', !!stripe);
+  console.log('Elements loaded:', !!elements);
+
   const handleSubmit = async (event: FormEvent) => {
     // We don't want to let default form submission happen here,
     // which would refresh the page.

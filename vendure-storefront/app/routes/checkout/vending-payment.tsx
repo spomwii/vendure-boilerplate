@@ -42,21 +42,31 @@ export async function loader({ params, request }: DataFunctionArgs) {
     method.code.includes('stripe')
   );
   
+  console.log('Eligible payment methods:', eligiblePaymentMethods.map(m => m.code));
+  console.log('Stripe method found:', stripeMethod ? 'Yes' : 'No');
+  console.log('STRIPE_PUBLISHABLE_KEY set:', !!process.env.STRIPE_PUBLISHABLE_KEY);
+  
   let stripePaymentIntent: string | undefined;
   let stripePublishableKey: string | undefined;
   let stripeError: string | undefined;
   
   if (stripeMethod) {
     try {
+      console.log('Creating Stripe payment intent...');
       const stripePaymentIntentResult = await createStripePaymentIntent({
         request,
       });
       stripePaymentIntent =
         stripePaymentIntentResult.createStripePaymentIntent ?? undefined;
       stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+      console.log('Stripe payment intent created:', !!stripePaymentIntent);
+      console.log('Stripe publishable key set:', !!stripePublishableKey);
     } catch (e: any) {
+      console.error('Stripe payment intent error:', e.message);
       stripeError = e.message;
     }
+  } else {
+    console.log('No Stripe payment method found');
   }
 
   return json({
