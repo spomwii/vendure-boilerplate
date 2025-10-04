@@ -104,77 +104,23 @@ export default function ConfirmationPage() {
   const [showThankYou, setShowThankYou] = useState(false);
   const autoDoor = doorNumber; // Use doorNumber from session for auto-unlock
 
-  // Monitor door status via MQTT
-  useEffect(() => {
-    if (!autoDoor) return;
-
-    const unsubscribe = doorStatusMonitor.subscribe((door, status) => {
-      if (door === autoDoor) {
-        console.log('Door status update:', status);
-        setDoorStatus(status.status);
-        if (status.status === 'open') {
-          setDoorOpenTime(status.timestamp);
-        } else if (status.status === 'closed' && doorStatus === 'open') {
-          // Door was open and now closed - show thank you message
-          setShowThankYou(true);
-          // Clear cart and redirect after showing thank you
-          setTimeout(async () => {
-            try {
-              const clearResponse = await fetch('/api/active-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=clearOrder'
-              });
-              
-              if (clearResponse.ok) {
-                console.log('Cart cleared after door closed');
-                window.location.href = '/';
-              }
-            } catch (e) {
-              console.log('Failed to clear cart:', e);
-              window.location.href = '/';
-            }
-          }, 3000); // Show thank you for 3 seconds
-        }
-      }
-    });
-
-    return unsubscribe;
-  }, [autoDoor, doorStatus]);
-
-  // Handle door unlock success
+  // Handle door unlock success - NO MQTT monitoring to prevent ESP32 conflicts
   useEffect(() => {
     if (unlockResult && unlockResult.includes('unlocked successfully')) {
+      console.log('Door unlock successful - simulating door status');
       setDoorStatus('open');
       setDoorOpenTime(Date.now());
       
-      // Fallback: if no MQTT status received, simulate door closing
+      // Simulate door closing after 5 seconds (for testing)
       setTimeout(() => {
-        if (doorStatus === 'open') {
-          setDoorStatus('closed');
-          setShowThankYou(true);
-          // Clear cart and redirect
-          setTimeout(async () => {
-            try {
-              const clearResponse = await fetch('/api/active-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=clearOrder'
-              });
-              
-              if (clearResponse.ok) {
-                console.log('Cart cleared after simulated door close');
-                window.location.href = '/';
-              }
-            } catch (e) {
-              console.log('Failed to clear cart:', e);
-              window.location.href = '/';
-            }
-          }, 3000);
-        }
+        console.log('Simulating door close');
+        setDoorStatus('closed');
+        setShowThankYou(true);
+        // Don't redirect - stay on thank you page
+        console.log('Thank you message shown - staying on page');
       }, 5000);
     }
-  }, [unlockResult, doorStatus]);
+  }, [unlockResult]);
 
   if (error) {
     return (
@@ -238,8 +184,8 @@ export default function ConfirmationPage() {
           setDoorStatus('closed');
         }, 5000);
         
-        // Don't clear cart or redirect yet - wait for door to close
-        console.log('Door unlock successful - waiting for door to close');
+        // Don't clear cart or redirect - let user stay on thank you page
+        console.log('Door unlock successful - user can stay on thank you page');
       } else {
         const error = await response.text();
         setUnlockResult(`Failed to unlock door #${door}: ${error}`);
