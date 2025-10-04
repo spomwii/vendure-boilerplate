@@ -219,11 +219,32 @@ export default function VendingPayment() {
           </div>
         ) : (
           <div>
-                <StripePayments
-                  clientSecret={stripePaymentIntent}
-                  publishableKey={stripePublishableKey}
-                  orderCode={activeOrder?.code ?? ''}
-                />
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Payment Options:</strong> Stripe integration with fallback test form
+              </p>
+            </div>
+            
+            {/* Stripe Payment */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Stripe Payment</h4>
+              <StripePayments
+                clientSecret={stripePaymentIntent}
+                publishableKey={stripePublishableKey}
+                orderCode={activeOrder?.code ?? ''}
+              />
+            </div>
+            
+            {/* Test Payment Fallback */}
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Test Payment (Fallback)</h4>
+              <SimpleCheckoutForm
+                orderCode={activeOrder?.code ?? ''}
+                onPaymentSuccess={(orderCode) => {
+                  window.location.href = `/checkout/confirmation/${orderCode}`;
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
