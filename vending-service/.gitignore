@@ -8,3 +8,15 @@ vending-service/node_modules
 vending-service/.env
 vending-service/token-store.json
 vending-service/node_modules
+vending-service/esp32-improved.ino
+vending-service/esp32.ino
+vending-service/esp32-full.ino
+vending-service/esp32-improved.ino
+vending-service/esp32-full.ino
+vending-service/test-unlock-simple.js
+vending-service/test-unlock-direct.js
+vending-service/test-unlock-debug.js
+vending-service/test-unlock-direct.js
+vending-service/test-unlock-debug.js
+vending-service/test-unlock-simple.js
+
