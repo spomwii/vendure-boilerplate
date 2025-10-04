@@ -83,11 +83,14 @@ export async function loader({ params, request }: DataFunctionArgs) {
 }
 
 export async function action({ params, request }: DataFunctionArgs) {
+  console.log('=== PAYMENT ACTION START ===');
   const body = await request.formData();
   const paymentMethodCode = body.get('paymentMethodCode');
   const paymentNonce = body.get('paymentNonce');
   
   console.log('Payment action called with method:', paymentMethodCode);
+  console.log('Request URL:', request.url);
+  console.log('Form data keys:', Array.from(body.keys()));
   
   if (typeof paymentMethodCode === 'string') {
     const { nextOrderStates } = await getNextOrderStates({

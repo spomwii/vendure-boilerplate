@@ -17,7 +17,10 @@ type LoaderData = {
 
 export async function loader({ params, request }: DataFunctionArgs) {
   try {
+    console.log('=== CONFIRMATION LOADER START ===');
     console.log('Looking for order with code:', params.orderCode);
+    console.log('Request URL:', request.url);
+    console.log('Request headers:', Object.fromEntries(request.headers.entries()));
     
     // For testing, if the order code is KNNSMQFWCE3694HB, create a mock order
     if (params.orderCode === 'KNNSMQFWCE3694HB') {
@@ -69,8 +72,18 @@ export async function loader({ params, request }: DataFunctionArgs) {
       }, { headers });
     }
     
+    console.log('Attempting to get real order...');
     const order = await getOrderByCode(params.orderCode!, { request });
     console.log('Order found:', order ? 'Yes' : 'No');
+    if (order) {
+      console.log('Order details:', {
+        id: order.id,
+        code: order.code,
+        active: order.active,
+        lines: order.lines?.length || 0,
+        totalWithTax: order.totalWithTax
+      });
+    }
     
     if (!order) {
       console.log('Order not found for code:', params.orderCode);
@@ -99,13 +112,22 @@ export async function loader({ params, request }: DataFunctionArgs) {
     }
     return json<LoaderData>({ order, vendingServiceUrl, error: false, doorNumber }, { headers });
   } catch (ex) {
+    console.error('=== CONFIRMATION LOADER ERROR ===');
     console.error('Error in confirmation loader:', ex);
+    console.error('Error details:', {
+      message: (ex as Error).message,
+      stack: (ex as Error).stack,
+      orderCode: params.orderCode
+    });
     return json<LoaderData>({ order: null, vendingServiceUrl: '', error: true });
   }
 }
 
 export default function ConfirmationPage() {
+  console.log('=== CONFIRMATION PAGE RENDER ===');
   const { order, vendingServiceUrl, doorNumber, error } = useLoaderData<LoaderData>();
+  console.log('Loader data:', { order: !!order, vendingServiceUrl, doorNumber, error });
+  
   const [unlocking, setUnlocking] = useState(false);
   const [unlockResult, setUnlockResult] = useState<string | null>(null);
   const [doorStatus, setDoorStatus] = useState<'closed' | 'open' | 'unknown'>('unknown');
@@ -113,6 +135,8 @@ export default function ConfirmationPage() {
   const [showThankYou, setShowThankYou] = useState(false);
   const [mqttConnected, setMqttConnected] = useState(false);
   const autoDoor = doorNumber; // Use doorNumber from session for auto-unlock
+  
+  console.log('Component state:', { unlocking, doorStatus, showThankYou, autoDoor });
 
   // Real door status monitoring via server-side API
   useEffect(() => {
