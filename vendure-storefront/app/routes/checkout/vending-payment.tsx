@@ -57,13 +57,16 @@ export async function loader({ params, request }: DataFunctionArgs) {
       const stripePaymentIntentResult = await createStripePaymentIntent({
         request,
       });
+      console.log('Stripe payment intent result:', stripePaymentIntentResult);
       stripePaymentIntent =
         stripePaymentIntentResult.createStripePaymentIntent ?? undefined;
       stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
       console.log('Stripe payment intent created:', !!stripePaymentIntent);
       console.log('Stripe publishable key set:', !!stripePublishableKey);
+      console.log('Payment intent value:', stripePaymentIntent);
     } catch (e: any) {
-      console.error('Stripe payment intent error:', e.message);
+      console.error('Stripe payment intent error:', e);
+      console.error('Error details:', e.message, e.stack);
       stripeError = e.message;
     }
   } else {
@@ -214,7 +217,8 @@ export default function VendingPayment() {
             </p>
             <p className="text-sm text-red-600">
               Payment intent: {stripePaymentIntent ? 'Set' : 'Missing'}<br/>
-              Publishable key: {stripePublishableKey ? 'Set' : 'Missing'}
+              Publishable key: {stripePublishableKey ? 'Set' : 'Missing'}<br/>
+              {stripeError && `Error: ${stripeError}`}
             </p>
           </div>
         ) : (
