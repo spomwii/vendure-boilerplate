@@ -14,6 +14,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const doorNumber = parseInt(door);
   const doorStatus = realDoorStatusMonitor.getDoorStatus(doorNumber);
   const isConnected = realDoorStatusMonitor.isMQTTConnected();
+  
+  // Debug logging
+  console.log(`Door status API called for door ${doorNumber}:`, {
+    status: doorStatus?.status || 'unknown',
+    timestamp: doorStatus?.timestamp || null,
+    orderId: doorStatus?.orderId || null,
+    mqttConnected: isConnected
+  });
 
   return json({
     door: doorNumber,

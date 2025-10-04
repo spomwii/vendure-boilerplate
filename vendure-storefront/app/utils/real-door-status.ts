@@ -48,24 +48,24 @@ export class RealDoorStatusMonitor {
         console.log('✅ Door status monitor connected to MQTT');
         this.isConnected = true;
         
-        // Subscribe to door status topics
-        this.mqttClient.subscribe('vending/esp-test-1/status/door_open', { qos: 1 });
-        this.mqttClient.subscribe('vending/esp-test-1/status/door_closed', { qos: 1 });
-        console.log('📡 Subscribed to door status topics');
+        // Subscribe to ESP32 events topic (single topic for all events)
+        this.mqttClient.subscribe('vending/esp-test-1/events', { qos: 1 });
+        console.log('📡 Subscribed to ESP32 events topic: vending/esp-test-1/events');
       });
 
       this.mqttClient.on('message', (topic: string, message: Buffer) => {
         try {
           const data = JSON.parse(message.toString());
-          console.log('📨 Door status message received:', topic, data);
+          console.log('📨 ESP32 event received:', topic, data);
           
-          if (topic.includes('door_open')) {
+          // Handle different event types from ESP32
+          if (data.type === 'door_open') {
             this.handleDoorOpen(data);
-          } else if (topic.includes('door_closed')) {
+          } else if (data.type === 'door_closed') {
             this.handleDoorClosed(data);
           }
         } catch (error) {
-          console.error('❌ Error parsing door status message:', error);
+          console.error('❌ Error parsing ESP32 event message:', error);
         }
       });
 
@@ -94,7 +94,7 @@ export class RealDoorStatusMonitor {
     };
     
     this.doorStatuses.set(door, status);
-    console.log(`🚪 Door ${door} opened`);
+    console.log(`🚪 Door ${door} opened - status updated:`, status);
     
     // Notify all listeners
     this.listeners.forEach(listener => {
@@ -112,7 +112,7 @@ export class RealDoorStatusMonitor {
     };
     
     this.doorStatuses.set(door, status);
-    console.log(`🚪 Door ${door} closed`);
+    console.log(`🚪 Door ${door} closed - status updated:`, status);
     
     // Notify all listeners
     this.listeners.forEach(listener => {
