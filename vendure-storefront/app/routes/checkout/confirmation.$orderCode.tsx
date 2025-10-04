@@ -51,12 +51,27 @@ export async function loader({ params, request }: DataFunctionArgs) {
 }
 
 export default function ConfirmationPage() {
-  const { order, vendingServiceUrl, doorNumber } = useLoaderData<LoaderData & { doorNumber?: number }>();
+  const { order, vendingServiceUrl, doorNumber, error } = useLoaderData<LoaderData & { doorNumber?: number }>();
   const { t } = useTranslation();
   const [unlocking, setUnlocking] = useState(false);
   const [unlockResult, setUnlockResult] = useState<string | null>(null);
   const [manualDoor, setManualDoor] = useState<number | ''>('');
   const [useManual, setUseManual] = useState(false);
+
+  console.log('ConfirmationPage rendered with:', { order: !!order, error, doorNumber });
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
+          Error loading order
+        </h2>
+        <p className="text-gray-600">
+          There was an error loading the order details. Please try again.
+        </p>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
@@ -64,6 +79,9 @@ export default function ConfirmationPage() {
         <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
           {t ? t('checkout.orderNotFound') : 'Order not found'}
         </h2>
+        <p className="text-gray-600">
+          The order could not be found. Please check the order code and try again.
+        </p>
       </div>
     );
   }
@@ -130,18 +148,25 @@ export default function ConfirmationPage() {
 
   // Auto-trigger unlock once if we have a door number from session or order
   useEffect(() => {
-    if (!unlocking && !unlockResult && autoDoor) {
-      handleOpenDoor(autoDoor);
+    try {
+      if (!unlocking && !unlockResult && autoDoor) {
+        console.log('Auto-triggering door unlock for door:', autoDoor);
+        handleOpenDoor(autoDoor);
+      }
+    } catch (error) {
+      console.error('Error in auto-unlock useEffect:', error);
+      setUnlockResult('Error in auto-unlock: ' + (error as Error).message);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoDoor]);
 
-  return (
-    <div className="p-8">
-      <h2 className="text-3xl flex items-center space-x-2 font-light tracking-tight text-gray-900 my-8">
-        <CheckCircleIcon className="text-green-600 w-8 h-8" />
-        <span>{t ? t('order.summary') : 'Order summary'}</span>
-      </h2>
+  try {
+    return (
+      <div className="p-8">
+        <h2 className="text-3xl flex items-center space-x-2 font-light tracking-tight text-gray-900 my-8">
+          <CheckCircleIcon className="text-green-600 w-8 h-8" />
+          <span>{t ? t('order.summary') : 'Order summary'}</span>
+        </h2>
 
       <p className="text-lg text-gray-700">
         {t ? t('checkout.orderSuccessMessage') : 'Thank you — your order is confirmed.'}{' '}
@@ -201,4 +226,17 @@ export default function ConfirmationPage() {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error('Error rendering confirmation page:', error);
+    return (
+      <div className="p-8">
+        <h2 className="text-3xl font-light tracking-tight text-gray-900 my-8">
+          Rendering Error
+        </h2>
+        <p className="text-gray-600">
+          There was an error rendering the confirmation page: {(error as Error).message}
+        </p>
+      </div>
+    );
+  }
 }
